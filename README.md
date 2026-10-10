@@ -57,12 +57,6 @@ Bu buyruqdan so'ng `dist/` papkasida to'liq tayyor, kompilyatsiya qilingan stati
 ## 🔑 Tizimga kirish ma'lumotlari
 
 Tizimga kirish bitta yagona oynadan amalga oshiriladi:
-
-- **Ustoz (Admin) uchun:**
-  - Login: `mxojayev` (yoki `ustoz`)
-  - Parol: `xojayev2013`
-  - *Imkoniyatlari:* O'quvchilarni qo'shish/tahrirlash, login va parollarni belgilash, oylik to'lovlarni nazorat qilish, davomat olish, baholash, sertifikat berish.
-
 - **O'quvchilar uchun:**
   - O'quvchilar login va parollari Ustoz tomonidan O'quvchilar bazasida yaratiladi (masalan: `azizbek` / `ai45_user1`).
   - *Imkoniyatlari:* Shaxsiy davomat ko'rsatkichi, uy vazifalari topshirish, oylik to'lov holati, o'zlashtirish va shaxsiy sertifikat.
