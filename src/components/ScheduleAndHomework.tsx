@@ -192,7 +192,7 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
                   </h2>
                   {nextLessonObj && (
                     <span className="px-2.5 py-1 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono-code text-xs">
-                      Keyingi: <strong>{nextLessonObj.week}-hafta ${nextLessonObj.dayOfWeek} (${nextLessonObj.number}-dars)</strong>
+                      Keyingi: <strong>{nextLessonObj.week}-hafta {nextLessonObj.dayOfWeek} ({nextLessonObj.number}-dars)</strong>
                     </span>
                   )}
                 </div>
