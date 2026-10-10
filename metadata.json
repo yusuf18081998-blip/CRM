@@ -1,0 +1,6 @@
+{
+  "name": "45-Maktab Sun'iy Intellekt OS",
+  "description": "45-maktab Sun'iy intellekt kursi uchun Cyber OS / HUD boshqaruv paneli, interaktiv davomat, o'quvchi portali, vazifalar va sertifikat generatori.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
