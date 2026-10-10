@@ -17,6 +17,7 @@ import {
   INITIAL_ATTENDANCE,
   INITIAL_HOMEWORK,
   INITIAL_SUBMISSIONS,
+  DEFAULT_COMPLETED_LESSONS,
 } from './data/initialData';
 import { CyberBackground3D } from './components/CyberBackground3D';
 import { TopNav } from './components/TopNav';
@@ -30,10 +31,10 @@ import { LoginModal } from './components/LoginModal';
 import { MonthlyPaymentsManager } from './components/MonthlyPaymentsManager';
 
 export default function App() {
-  // State with LocalStorage Persistence
+  // State with LocalStorage Persistence (v4_clean)
   const [students, setStudents] = useState<Student[]>(() => {
     try {
-      const saved = localStorage.getItem('maktab45_ai_students_v2');
+      const saved = localStorage.getItem('maktab45_ai_students_clean_v4');
       return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
     } catch {
       return INITIAL_STUDENTS;
@@ -42,7 +43,7 @@ export default function App() {
 
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(() => {
     try {
-      const saved = localStorage.getItem('maktab45_ai_attendance_v2');
+      const saved = localStorage.getItem('maktab45_ai_attendance_clean_v4');
       return saved ? JSON.parse(saved) : INITIAL_ATTENDANCE;
     } catch {
       return INITIAL_ATTENDANCE;
@@ -51,7 +52,7 @@ export default function App() {
 
   const [homework, setHomework] = useState<Homework[]>(() => {
     try {
-      const saved = localStorage.getItem('maktab45_ai_homework_v2');
+      const saved = localStorage.getItem('maktab45_ai_homework_clean_v4');
       return saved ? JSON.parse(saved) : INITIAL_HOMEWORK;
     } catch {
       return INITIAL_HOMEWORK;
@@ -60,17 +61,27 @@ export default function App() {
 
   const [submissions, setSubmissions] = useState<StudentSubmission[]>(() => {
     try {
-      const saved = localStorage.getItem('maktab45_ai_submissions_v2');
+      const saved = localStorage.getItem('maktab45_ai_submissions_clean_v4');
       return saved ? JSON.parse(saved) : INITIAL_SUBMISSIONS;
     } catch {
       return INITIAL_SUBMISSIONS;
     }
   });
 
+  // 72 Darslik o'quv rejasining o'tilganlik holati (Default: 5-hafta Dushanbagacha, 1-9 darslar)
+  const [completedLessons, setCompletedLessons] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem('maktab45_ai_completed_lessons_v4');
+      return saved ? JSON.parse(saved) : DEFAULT_COMPLETED_LESSONS;
+    } catch {
+      return DEFAULT_COMPLETED_LESSONS;
+    }
+  });
+
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [role, setRole] = useState<UserRole>('admin');
-  const [activeStudent, setActiveStudent] = useState<Student>(() => students[0] || INITIAL_STUDENTS[0]);
+  const [activeStudent, setActiveStudent] = useState<Student | null>(() => students[0] || null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Navigation State
@@ -79,13 +90,13 @@ export default function App() {
   // Modals state
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [selectedStudentForCert, setSelectedStudentForCert] = useState<string>(
-    students[0]?.fullName || 'Azizbek Rahimov'
+    students[0]?.fullName || ''
   );
 
   // Save to LocalStorage on updates
   useEffect(() => {
     try {
-      localStorage.setItem('maktab45_ai_students_v2', JSON.stringify(students));
+      localStorage.setItem('maktab45_ai_students_clean_v4', JSON.stringify(students));
     } catch (e) {
       console.error('Failed to save students to localStorage', e);
     }
@@ -93,7 +104,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('maktab45_ai_attendance_v2', JSON.stringify(attendance));
+      localStorage.setItem('maktab45_ai_attendance_clean_v4', JSON.stringify(attendance));
     } catch (e) {
       console.error('Failed to save attendance to localStorage', e);
     }
@@ -101,7 +112,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('maktab45_ai_homework_v2', JSON.stringify(homework));
+      localStorage.setItem('maktab45_ai_homework_clean_v4', JSON.stringify(homework));
     } catch (e) {
       console.error('Failed to save homework to localStorage', e);
     }
@@ -109,11 +120,19 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('maktab45_ai_submissions_v2', JSON.stringify(submissions));
+      localStorage.setItem('maktab45_ai_submissions_clean_v4', JSON.stringify(submissions));
     } catch (e) {
       console.error('Failed to save submissions to localStorage', e);
     }
   }, [submissions]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('maktab45_ai_completed_lessons_v4', JSON.stringify(completedLessons));
+    } catch (e) {
+      console.error('Failed to save completed lessons to localStorage', e);
+    }
+  }, [completedLessons]);
 
   // Auth Handlers
   const handleLoginSuccess = (newRole: UserRole, student?: Student) => {
@@ -136,21 +155,25 @@ export default function App() {
   // Handlers for Students CRUD
   const handleAddStudent = (newStudent: Student) => {
     setStudents((prev) => [newStudent, ...prev]);
+    if (!activeStudent) {
+      setActiveStudent(newStudent);
+    }
   };
 
   const handleUpdateStudent = (updatedStudent: Student) => {
     setStudents((prev) =>
       prev.map((s) => (s.id === updatedStudent.id ? updatedStudent : s))
     );
-    if (activeStudent.id === updatedStudent.id) {
+    if (activeStudent?.id === updatedStudent.id) {
       setActiveStudent(updatedStudent);
     }
   };
 
   const handleDeleteStudent = (studentId: string) => {
     setStudents((prev) => prev.filter((s) => s.id !== studentId));
-    if (activeStudent.id === studentId && students.length > 1) {
-      setActiveStudent(students.find((s) => s.id !== studentId) || students[0]);
+    if (activeStudent?.id === studentId) {
+      const remaining = students.filter((s) => s.id !== studentId);
+      setActiveStudent(remaining.length > 0 ? remaining[0] : null);
     }
   };
 
@@ -194,6 +217,43 @@ export default function App() {
     setActiveTab('certificate');
   };
 
+  // Handlers for Curriculum Lesson Progression
+  const handleToggleCompletedLesson = (lessonNumber: number) => {
+    setCompletedLessons((prev) => {
+      if (prev.includes(lessonNumber)) {
+        return prev.filter((n) => n !== lessonNumber);
+      } else {
+        return [...prev, lessonNumber].sort((a, b) => a - b);
+      }
+    });
+  };
+
+  const handleSetCompletedLessons = (lessons: number[]) => {
+    setCompletedLessons(lessons);
+  };
+
+  // Clear all data (Toza holatga qaytarish)
+  const handleClearAllData = () => {
+    if (window.confirm("Haqiqatan ham barcha o'quvchilar, davomat va vazifalar o'chirilib, toza holatga keltirilsinmi?")) {
+      setStudents([]);
+      setAttendance([]);
+      setHomework([]);
+      setSubmissions([]);
+      setActiveStudent(null);
+      setCompletedLessons(DEFAULT_COMPLETED_LESSONS);
+      localStorage.removeItem('maktab45_ai_students_clean_v4');
+      localStorage.removeItem('maktab45_ai_attendance_clean_v4');
+      localStorage.removeItem('maktab45_ai_homework_clean_v4');
+      localStorage.removeItem('maktab45_ai_submissions_clean_v4');
+      localStorage.removeItem('maktab45_ai_completed_lessons_v4');
+      localStorage.removeItem('maktab45_ai_students_v2');
+      localStorage.removeItem('maktab45_ai_attendance_v2');
+      localStorage.removeItem('maktab45_ai_homework_v2');
+      localStorage.removeItem('maktab45_ai_submissions_v2');
+      alert("Baza to'liq tozalandi! Endi o'zingiz yangi o'quvchilarni kiritishingiz mumkin.");
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-[#04060f] text-slate-100 selection:bg-cyan-500 selection:text-slate-950 flex flex-col font-sans">
       {/* Three.js Cyber Ambient 3D Canvas Background */}
@@ -214,7 +274,7 @@ export default function App() {
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
         {/* Banner if in Student Mode */}
-        {role === 'student' && activeTab !== 'portal' && (
+        {role === 'student' && activeStudent && activeTab !== 'portal' && (
           <div className="mb-6 p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-between text-xs text-cyan-300">
             <span>
               Hozirda <strong>{activeStudent.fullName}</strong> (@{activeStudent.username}) o'quvchi kabineti faol.
@@ -235,6 +295,7 @@ export default function App() {
             attendance={attendance}
             homework={homework}
             submissions={submissions}
+            completedLessons={completedLessons}
             setActiveTab={setActiveTab}
             onOpenAddStudent={() => setIsAddStudentModalOpen(true)}
           />
@@ -281,6 +342,9 @@ export default function App() {
             students={students}
             role={role}
             activeStudent={activeStudent}
+            completedLessons={completedLessons}
+            onToggleCompletedLesson={handleToggleCompletedLesson}
+            onSetCompletedLessons={handleSetCompletedLessons}
             onAddHomework={handleAddHomework}
             onSubmitHomework={handleSubmitHomework}
             onGradeSubmission={handleGradeSubmission}
@@ -299,8 +363,10 @@ export default function App() {
             onSubmitHomework={handleSubmitHomework}
             setActiveTab={setActiveTab}
             onOpenCertificateForMe={() => {
-              setSelectedStudentForCert(activeStudent.fullName);
-              setActiveTab('certificate');
+              if (activeStudent) {
+                setSelectedStudentForCert(activeStudent.fullName);
+                setActiveTab('certificate');
+              }
             }}
           />
         )}
@@ -325,9 +391,20 @@ export default function App() {
 
       {/* Cyber OS Minimal Footer */}
       <footer className="relative z-10 border-t border-slate-900 bg-[#04060f]/90 py-5 text-center text-xs text-slate-500 font-mono-code">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div>45-SONLI MAKTAB · USTOZ M.XO'JAYEV SUN'IY INTELLEKT KURSI (72 SOAT)</div>
-          <div>CYBER OS v2.8 · YAGONA KIRISH VA OYLIK TO'LOV NAZORATI</div>
+          <div className="flex items-center gap-4">
+            {role === 'admin' && (
+              <button
+                onClick={handleClearAllData}
+                className="text-rose-400 hover:text-rose-300 underline cursor-pointer text-[11px]"
+                title="Barcha ma'lumotlarni tozalash"
+              >
+                Bazani tozalash (Reset)
+              </button>
+            )}
+            <span>CYBER OS v2.9 · TOZA BAZA REJIMI</span>
+          </div>
         </div>
       </footer>
     </div>

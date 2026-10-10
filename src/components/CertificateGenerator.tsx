@@ -10,14 +10,14 @@ interface CertificateGeneratorProps {
 
 export const CertificateGenerator: React.FC<CertificateGeneratorProps> = ({
   students,
-  initialStudentName = 'Azizbek Rahimov',
+  initialStudentName = '',
 }) => {
-  const [studentName, setStudentName] = useState(initialStudentName);
+  const [studentName, setStudentName] = useState(initialStudentName || (students[0]?.fullName ?? ''));
   const [courseTitle, setCourseTitle] = useState("Sun'iy Intellekt va Machine Learning");
   const [completionGrade, setCompletionGrade] = useState("A'lo Darajali (A+)");
-  const [issueDate, setIssueDate] = useState('2026-09-25');
+  const [issueDate, setIssueDate] = useState('2026-10-10');
   const [instructorName, setInstructorName] = useState("Ustoz M.Xo'jayev (Senior AI Lead)");
-  const [certificateId, setCertificateId] = useState('CERT-AI-2026-45M-089');
+  const [certificateId, setCertificateId] = useState('CERT-AI-2026-45M-001');
 
   const certificateRef = useRef<HTMLDivElement>(null);
 
@@ -94,19 +94,25 @@ export const CertificateGenerator: React.FC<CertificateGeneratorProps> = ({
               O'quvchilar ro'yxatidan tezkor tanlash:
             </label>
             <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1 bg-slate-900/60 rounded border border-slate-800">
-              {students.map((st) => (
-                <button
-                  key={st.id}
-                  onClick={() => selectStudent(st)}
-                  className={`px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                    studentName === st.fullName
-                      ? 'bg-cyan-500 text-slate-950 font-bold'
-                      : 'bg-slate-800 text-slate-300 hover:text-white'
-                  }`}
-                >
-                  {st.fullName}
-                </button>
-              ))}
+              {students.length === 0 ? (
+                <span className="text-[11px] text-slate-500 p-1">
+                  Hozircha o'quvchilar kiritilmagan. Quyidagi maydonga ismni erkin yozishingiz mumkin.
+                </span>
+              ) : (
+                students.map((st) => (
+                  <button
+                    key={st.id}
+                    onClick={() => selectStudent(st)}
+                    className={`px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                      studentName === st.fullName
+                        ? 'bg-cyan-500 text-slate-950 font-bold'
+                        : 'bg-slate-800 text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {st.fullName}
+                  </button>
+                ))
+              )}
             </div>
           </div>
 

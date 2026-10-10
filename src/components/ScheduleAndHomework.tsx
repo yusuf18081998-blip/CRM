@@ -9,6 +9,9 @@ interface ScheduleAndHomeworkProps {
   students: Student[];
   role: UserRole;
   activeStudent: Student | null;
+  completedLessons: number[];
+  onToggleCompletedLesson: (lessonNumber: number) => void;
+  onSetCompletedLessons: (lessons: number[]) => void;
   onAddHomework: (hw: Homework) => void;
   onSubmitHomework: (sub: StudentSubmission) => void;
   onGradeSubmission: (subId: string, score: number, feedback: string) => void;
@@ -20,6 +23,9 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
   students,
   role,
   activeStudent,
+  completedLessons,
+  onToggleCompletedLesson,
+  onSetCompletedLessons,
   onAddHomework,
   onSubmitHomework,
   onGradeSubmission,
@@ -94,6 +100,14 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
     setGradingSub(null);
   };
 
+  // Calculate completed lessons stats
+  const sortedCompleted = [...completedLessons].sort((a, b) => a - b);
+  const maxCompleted = sortedCompleted.length > 0 ? Math.max(...sortedCompleted) : 0;
+  const nextLessonNum = maxCompleted < 72 ? maxCompleted + 1 : null;
+  const currentLessonObj = CURRICULUM_72_LESSONS.find((l) => l.number === maxCompleted);
+  const nextLessonObj = CURRICULUM_72_LESSONS.find((l) => l.number === nextLessonNum);
+  const progressPercent = Math.round((completedLessons.length / 72) * 100);
+
   // Filter 72 lessons
   const filteredLessons = CURRICULUM_72_LESSONS.filter((item) => {
     const matchesQuarter = quarterFilter === 'all' || item.quarter === quarterFilter;
@@ -162,6 +176,92 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
       {/* Subtab 1: 72 Lessons Curriculum Plan */}
       {activeSubTab === 'curriculum' && (
         <div className="space-y-5">
+          {/* Interactive Lesson Progression Tracker Card */}
+          <div className="cyber-glass-card rounded-xl p-5 border border-cyan-500/30 space-y-4">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-mono-code text-cyan-400 mb-1">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>DARSLAR BOSQICHI & O'TILISH MONITORINGI</span>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h2 className="text-lg font-bold text-white">
+                    {currentLessonObj
+                      ? `${currentLessonObj.week}-hafta ${currentLessonObj.dayOfWeek} (${currentLessonObj.number}-dars) o'tildi`
+                      : "Hali dars o'tilmagan"}
+                  </h2>
+                  {nextLessonObj && (
+                    <span className="px-2.5 py-1 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono-code text-xs">
+                      Keyingi: <strong>{nextLessonObj.week}-hafta ${nextLessonObj.dayOfWeek} (${nextLessonObj.number}-dars)</strong>
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Jami 72 darsdan <strong>{completedLessons.length} ta dars</strong> o'tildi ({progressPercent}% yakunlandi).
+                  {role === 'admin' && " Istalgan dars qatoridagi 'Holat' tugmasini bosib, darsni o'tildi yoki rejadagi deb erkin belgilashingiz mumkin."}
+                </p>
+              </div>
+
+              {/* Admin Quick Progression Presets */}
+              {role === 'admin' && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Biz hozir 5 hafta dushanbani o'tganmiz (1-9 darslar)
+                      onSetCompletedLessons([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-200 text-xs font-mono-code flex items-center gap-1.5 transition-all cursor-pointer shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+                    title="Hozirgi bosqich: 5-hafta Dushanba (9-dars)gacha belgilash"
+                  >
+                    <span>⭐ 5-hafta Dushanbagacha belgilash (9-dars)</span>
+                  </button>
+
+                  {nextLessonNum && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleCompletedLesson(nextLessonNum)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 text-xs font-mono-code flex items-center gap-1.5 transition-all cursor-pointer"
+                      title="Keyingi darsni o'tildi deb belgilash"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Keyingi dars ({nextLessonNum}-dars)</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (completedLessons.length === 0) return;
+                      const last = Math.max(...completedLessons);
+                      onToggleCompletedLesson(last);
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono-code transition-all cursor-pointer"
+                    title="Oxirgi o'tilgan darsni bekor qilish"
+                  >
+                    <span>-1 dars</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] font-mono-code text-slate-400">
+                <span className={completedLessons.length >= 1 ? 'text-cyan-400 font-bold' : ''}>1-chorak (1-18)</span>
+                <span className={completedLessons.length >= 19 ? 'text-cyan-400 font-bold' : ''}>2-chorak (19-34)</span>
+                <span className={completedLessons.length >= 35 ? 'text-cyan-400 font-bold' : ''}>3-chorak (35-54)</span>
+                <span className={completedLessons.length >= 55 ? 'text-cyan-400 font-bold' : ''}>4-chorak (55-72)</span>
+              </div>
+              <div className="w-full h-2.5 rounded-full bg-slate-900 border border-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-emerald-400 transition-all duration-300 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Quarter Filters & Search Bar */}
           <div className="cyber-glass-card rounded-xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
@@ -264,18 +364,50 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
 
                       {/* Status */}
                       <td className="py-3 px-4 text-right whitespace-nowrap font-mono-code">
-                        {item.number <= 6 ? (
-                          <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 text-[11px]">
-                            O'tildi
-                          </span>
-                        ) : item.number === 7 ? (
-                          <span className="text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/40 text-[11px] font-bold animate-pulse">
-                            Keyingi dars
-                          </span>
+                        {completedLessons.includes(item.number) ? (
+                          <button
+                            type="button"
+                            disabled={role !== 'admin'}
+                            onClick={() => role === 'admin' && onToggleCompletedLesson(item.number)}
+                            className={`text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/30 text-[11px] inline-flex items-center gap-1 font-semibold ${
+                              role === 'admin'
+                                ? 'hover:bg-emerald-500/20 hover:border-emerald-500/60 cursor-pointer transition-all'
+                                : ''
+                            }`}
+                            title={role === 'admin' ? "Bosib, o'tilmagan deb o'zgartirish" : undefined}
+                          >
+                            <CheckCircle className="w-3 h-3 text-emerald-400" />
+                            <span>O'tildi</span>
+                          </button>
+                        ) : item.number === nextLessonNum ? (
+                          <button
+                            type="button"
+                            disabled={role !== 'admin'}
+                            onClick={() => role === 'admin' && onToggleCompletedLesson(item.number)}
+                            className={`text-cyan-300 bg-cyan-500/20 px-2.5 py-1 rounded border border-cyan-500/40 text-[11px] font-bold animate-pulse inline-flex items-center gap-1 ${
+                              role === 'admin'
+                                ? 'hover:bg-cyan-500/30 hover:border-cyan-400 cursor-pointer transition-all'
+                                : ''
+                            }`}
+                            title={role === 'admin' ? "Dars o'tildi deb belgilash uchun bosing" : undefined}
+                          >
+                            <Sparkles className="w-3 h-3 text-cyan-400" />
+                            <span>Keyingi dars</span>
+                          </button>
                         ) : (
-                          <span className="text-slate-500 text-[11px]">
-                            Rejada
-                          </span>
+                          <button
+                            type="button"
+                            disabled={role !== 'admin'}
+                            onClick={() => role === 'admin' && onToggleCompletedLesson(item.number)}
+                            className={`text-slate-500 text-[11px] px-2 py-0.5 rounded border border-transparent ${
+                              role === 'admin'
+                                ? 'hover:text-cyan-400 hover:border-slate-700 hover:bg-slate-900 cursor-pointer transition-all'
+                                : ''
+                            }`}
+                            title={role === 'admin' ? "O'tildi deb belgilash uchun bosing" : undefined}
+                          >
+                            <span>Rejada</span>
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -305,17 +437,32 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {homework.map((hw) => {
-              const studentSub = activeStudent
-                ? submissions.find((s) => s.homeworkId === hw.id && s.studentId === activeStudent.id)
-                : null;
-
-              return (
-                <div
-                  key={hw.id}
-                  className="cyber-glass-card rounded-xl p-5 border border-slate-800 flex flex-col justify-between"
+          {homework.length === 0 ? (
+            <div className="cyber-glass-card rounded-xl p-8 text-center border border-dashed border-slate-800">
+              <BookOpen className="w-8 h-8 text-cyan-400/40 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-300 mb-1">Hozircha uy vazifalari mavjud emas</p>
+              <p className="text-xs text-slate-500 mb-4">Ustoz dars davomida yangi amaliy topshiriq qo'shishi mumkin.</p>
+              {role === 'admin' && (
+                <button
+                  onClick={() => setShowAddHwModal(true)}
+                  className="px-4 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold text-xs hover:bg-cyan-400 cursor-pointer"
                 >
+                  + Yangi Vazifa Qo'shish
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {homework.map((hw) => {
+                const studentSub = activeStudent
+                  ? submissions.find((s) => s.homeworkId === hw.id && s.studentId === activeStudent.id)
+                  : null;
+
+                return (
+                  <div
+                    key={hw.id}
+                    className="cyber-glass-card rounded-xl p-5 border border-slate-800 flex flex-col justify-between"
+                  >
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-mono-code text-cyan-400">
@@ -393,8 +540,9 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
 
       {/* Subtab 3: Submissions */}
       {activeSubTab === 'submissions' && (
@@ -484,6 +632,14 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
                     </tr>
                   );
                 })}
+
+                {submissions.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                      Hozircha topshirilgan vazifalar yo'q.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

@@ -7,6 +7,7 @@ interface DashboardStatsProps {
   attendance: AttendanceRecord[];
   homework: Homework[];
   submissions: StudentSubmission[];
+  completedLessons?: number[];
   setActiveTab: (tab: ActiveTab) => void;
   onOpenAddStudent: () => void;
 }
@@ -16,6 +17,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   attendance,
   homework,
   submissions,
+  completedLessons = [1, 2, 3, 4, 5, 6, 7, 8, 9],
   setActiveTab,
   onOpenAddStudent,
 }) => {
@@ -211,7 +213,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
               </button>
             </div>
 
-            {latestLesson && (
+            {latestLesson ? (
               <div className="bg-slate-900/70 rounded-lg p-4 border border-slate-800/80">
                 <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
                   <span>Sana: <strong className="text-slate-200">{latestLesson.date}</strong></span>
@@ -243,6 +245,18 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
                   })}
                 </div>
               </div>
+            ) : (
+              <div className="bg-slate-900/50 rounded-lg p-6 border border-dashed border-slate-800 text-center">
+                <p className="text-xs text-slate-400 mb-3">
+                  Hozircha darslar bo'yicha davomat kiritilmagan.
+                </p>
+                <button
+                  onClick={() => setActiveTab('attendance')}
+                  className="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/30 cursor-pointer transition-colors"
+                >
+                  + Dars o'tish va davomat belgilash
+                </button>
+              </div>
             )}
           </div>
 
@@ -257,37 +271,72 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
             </div>
 
             <div className="space-y-3">
-              {[
-                { num: '1-CH', title: '1-Chorak: Prompt Engineering & Matnli AI', desc: '1-18 darslar: ChatGPT, Claude, Gemini, Aniq topshiriq va Nazorat ishi', status: 'O\'tilmoqda (6/18)', progress: 33 },
-                { num: '2-CH', title: '2-Chorak: Generativ Dizayn & Vizual AI', desc: '19-34 darslar: Midjourney, DALL-E 3, Leonardo AI, Canva AI, Inpainting', status: 'Kutilmoqda', progress: 0 },
-                { num: '3-CH', title: '3-Chorak: Audio, Video & Avtomatlashtirish', desc: '35-54 darslar: ElevenLabs, Runway, HeyGen, Gamma.app, Code AI, Excel AI', status: 'Kutilmoqda', progress: 0 },
-                { num: '4-CH', title: '4-Chorak: Telegram Bot & Yillik Loyiha Himoyasi', desc: '55-72 darslar: No-code bot, AI etikasi, Deepfake savodxonligi, Loyiha himoyasi', status: 'Kutilmoqda', progress: 0 },
-              ].map((mod) => (
-                <div
-                  key={mod.num}
-                  className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 flex items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-12 h-8 rounded bg-slate-800 flex items-center justify-center font-mono-code text-cyan-400 text-xs font-bold shrink-0">
-                      {mod.num}
-                    </span>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-200">{mod.title}</div>
-                      <div className="text-xs text-slate-400">{mod.desc}</div>
+              {(() => {
+                const q1 = completedLessons.filter((n) => n >= 1 && n <= 18).length;
+                const q2 = completedLessons.filter((n) => n >= 19 && n <= 34).length;
+                const q3 = completedLessons.filter((n) => n >= 35 && n <= 54).length;
+                const q4 = completedLessons.filter((n) => n >= 55 && n <= 72).length;
+
+                const modules = [
+                  {
+                    num: '1-CH',
+                    title: '1-Chorak: Prompt Engineering & Matnli AI',
+                    desc: '1-18 darslar: ChatGPT, Claude, Gemini, Aniq topshiriq va Nazorat ishi',
+                    status: q1 >= 18 ? "Yakunlandi (18/18)" : q1 > 0 ? `O'tilmoqda (${q1}/18)` : "Kutilmoqda",
+                    progress: Math.round((q1 / 18) * 100),
+                  },
+                  {
+                    num: '2-CH',
+                    title: '2-Chorak: Generativ Dizayn & Vizual AI',
+                    desc: '19-34 darslar: Midjourney, DALL-E 3, Leonardo AI, Canva AI, Inpainting',
+                    status: q2 >= 16 ? "Yakunlandi (16/16)" : q2 > 0 ? `O'tilmoqda (${q2}/16)` : "Kutilmoqda",
+                    progress: Math.round((q2 / 16) * 100),
+                  },
+                  {
+                    num: '3-CH',
+                    title: '3-Chorak: Audio, Video & Avtomatlashtirish',
+                    desc: '35-54 darslar: ElevenLabs, Runway, HeyGen, Gamma.app, Code AI, Excel AI',
+                    status: q3 >= 20 ? "Yakunlandi (20/20)" : q3 > 0 ? `O'tilmoqda (${q3}/20)` : "Kutilmoqda",
+                    progress: Math.round((q3 / 20) * 100),
+                  },
+                  {
+                    num: '4-CH',
+                    title: '4-Chorak: Telegram Bot & Yillik Loyiha Himoyasi',
+                    desc: '55-72 darslar: No-code bot, AI etikasi, Deepfake savodxonligi, Loyiha himoyasi',
+                    status: q4 >= 18 ? "Yakunlandi (18/18)" : q4 > 0 ? `O'tilmoqda (${q4}/18)` : "Kutilmoqda",
+                    progress: Math.round((q4 / 18) * 100),
+                  },
+                ];
+
+                return modules.map((mod) => (
+                  <div
+                    key={mod.num}
+                    className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800/80 flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-12 h-8 rounded bg-slate-800 flex items-center justify-center font-mono-code text-cyan-400 text-xs font-bold shrink-0">
+                        {mod.num}
+                      </span>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-200">{mod.title}</div>
+                        <div className="text-xs text-slate-400">{mod.desc}</div>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className={`text-xs font-mono-code font-semibold px-2 py-0.5 rounded ${
+                        mod.status.includes("Yakunlandi")
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                          : mod.status.includes("O'tilmoqda")
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {mod.status}
+                      </span>
                     </div>
                   </div>
-
-                  <div className="text-right shrink-0">
-                    <span className={`text-xs font-mono-code font-semibold px-2 py-0.5 rounded ${
-                      mod.status.includes('O\'tilmoqda')
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                        : 'bg-slate-800 text-slate-400'
-                    }`}>
-                      {mod.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ));
+              })()}
             </div>
           </div>
         </div>
@@ -309,45 +358,53 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
               </button>
             </div>
 
-            <div className="space-y-3">
-              {studentRankings.slice(0, 6).map((item, index) => (
-                <div
-                  key={item.student.id}
-                  className="p-3 rounded-lg bg-slate-900/70 border border-slate-800/80 flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-mono-code ${
-                      index === 0
-                        ? 'bg-amber-400 text-slate-950 shadow-[0_0_10px_rgba(251,191,36,0.5)]'
-                        : index === 1
-                        ? 'bg-slate-300 text-slate-950'
-                        : index === 2
-                        ? 'bg-amber-700 text-white'
-                        : 'bg-slate-800 text-slate-400'
-                    }`}>
-                      {index + 1}
-                    </span>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-200">
-                        {item.student.fullName}
-                      </div>
-                      <div className="text-xs text-slate-400 font-mono-code">
-                        Davomat: {item.attendancePercent}% · Uy vazifa: {item.averageScore} ball
+            {studentRankings.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-400">
+                <Users className="w-8 h-8 text-cyan-400/40 mx-auto mb-2" />
+                <p className="font-semibold text-slate-300">O'quvchilar bazasi bo'sh</p>
+                <p className="text-slate-500 mt-1">O'quvchilarni qo'shsangiz reyting avtomatik shakllanadi.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {studentRankings.slice(0, 6).map((item, index) => (
+                  <div
+                    key={item.student.id}
+                    className="p-3 rounded-lg bg-slate-900/70 border border-slate-800/80 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-mono-code ${
+                        index === 0
+                          ? 'bg-amber-400 text-slate-950 shadow-[0_0_10px_rgba(251,191,36,0.5)]'
+                          : index === 1
+                          ? 'bg-slate-300 text-slate-950'
+                          : index === 2
+                          ? 'bg-amber-700 text-white'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {index + 1}
+                      </span>
+                      <div>
+                        <div className="text-sm font-semibold text-slate-200">
+                          {item.student.fullName}
+                        </div>
+                        <div className="text-xs text-slate-400 font-mono-code">
+                          Davomat: {item.attendancePercent}% · Uy vazifa: {item.averageScore} ball
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="text-right">
-                    <div className="text-sm font-bold font-mono-code text-cyan-400">
-                      {item.overallScore}
-                    </div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-wider">
-                      Ko'rsatkich
+                    <div className="text-right">
+                      <div className="text-sm font-bold font-mono-code text-cyan-400">
+                        {item.overallScore}
+                      </div>
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">
+                        Ko'rsatkich
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-5 pt-4 border-t border-slate-800">
               <button

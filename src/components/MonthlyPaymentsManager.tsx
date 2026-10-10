@@ -27,7 +27,7 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
       ...student.monthlyPayments,
       [monthKey]: {
         status,
-        amount: status === 'scholarship' ? 0 : 450000,
+        amount: status === 'scholarship' ? 0 : 100000,
         paidDate: status === 'paid' ? new Date().toISOString().split('T')[0] : undefined,
       },
     };
@@ -50,7 +50,7 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
     const payment = s.monthlyPayments?.[selectedMonth];
     if (payment?.status === 'paid') {
       paidCount++;
-      totalRevenue += payment.amount || 450000;
+      totalRevenue += payment.amount || 100000;
     } else if (payment?.status === 'scholarship') {
       scholarshipCount++;
     } else {
@@ -95,7 +95,7 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
 
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 font-mono-code text-xs text-emerald-300">
           <DollarSign className="w-4 h-4 text-emerald-400" />
-          <span>Kurs narxi: <strong>450 000 UZS / oy</strong></span>
+          <span>Kurs narxi: <strong>100 000 UZS / oy</strong></span>
         </div>
       </div>
 
@@ -234,7 +234,7 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
               {filteredStudents.map((student) => {
                 const monthPayment = student.monthlyPayments?.[selectedMonth] || {
                   status: 'pending',
-                  amount: 450000,
+                  amount: 100000,
                 };
                 const status = monthPayment.status;
 
@@ -259,7 +259,7 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
                         <div className="inline-flex flex-col items-center">
                           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/30 font-mono-code">
                             <CheckCircle2 className="w-3 h-3" />
-                            <span>To'langan (450 000 UZS)</span>
+                            <span>To'langan (100 000 UZS)</span>
                           </span>
                           {monthPayment.paidDate && (
                             <span className="text-[10px] text-slate-500 font-mono-code mt-0.5">
@@ -350,6 +350,22 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
                   </tr>
                 );
               })}
+
+              {filteredStudents.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <CreditCard className="w-8 h-8 text-cyan-400/40" />
+                      <p className="text-sm font-semibold text-slate-300">
+                        O'quvchilar ro'yxati bo'sh
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Oylik to'lovlarni nazorat qilish uchun avval o'quvchilarni kiritishingiz kerak.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

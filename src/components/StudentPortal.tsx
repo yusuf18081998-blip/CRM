@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Student, AttendanceRecord, Homework, StudentSubmission, ActiveTab, MONTH_LIST } from '../types';
-import { CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle } from 'lucide-react';
+import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle } from 'lucide-react';
 
 interface StudentPortalProps {
-  student: Student;
+  student: Student | null;
   allStudents: Student[];
   onSelectStudent: (s: Student) => void;
   attendance: AttendanceRecord[];
@@ -16,6 +16,8 @@ interface StudentPortalProps {
 
 export const StudentPortal: React.FC<StudentPortalProps> = ({
   student,
+  allStudents,
+  onSelectStudent,
   attendance,
   homework,
   submissions,
@@ -26,6 +28,39 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   const [submittingHwId, setSubmittingHwId] = useState<string | null>(null);
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  if (!student) {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <div className="cyber-glass rounded-2xl p-8 text-center border border-cyan-500/30 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 mx-auto mb-4 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+            <User className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold font-orbitron text-white mb-2">
+            O'QUVCHI KABINETI
+          </h2>
+          <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto">
+            Hozircha tizimga o'quvchi sifatida kirmagansiz yoki o'quvchilar ro'yxati bo'sh.
+            Ustoz tomonidan o'quvchi qo'shilgach, o'quvchi logini orqali kirishingiz mumkin.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={() => setActiveTab('students')}
+              className="px-5 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-[0_0_15px_rgba(6,182,212,0.4)] cursor-pointer"
+            >
+              O'quvchilar Ro'yxatini Ko'rish
+            </button>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className="px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-xs sm:text-sm transition-all cursor-pointer"
+            >
+              Boshqaruv Paneliga Qaytish
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate attendance for this student
   let presentCount = 0;
@@ -182,7 +217,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             )}
           </div>
           <div className="text-xs text-slate-400">
-            {student.scholarshipReason || "Har oy: 450 000 UZS"}
+            {student.scholarshipReason || "Har oy: 100 000 UZS"}
           </div>
         </div>
       </div>
@@ -194,12 +229,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             <DollarSign className="w-5 h-5 text-emerald-400" />
             <span>Oylik To'lovlarim Tarixi (2026-2027)</span>
           </h2>
-          <span className="text-xs font-mono-code text-slate-400">9 OY REJASI</span>
+          <span className="text-xs font-mono-code text-slate-400">9 OY REJASI (100 000 UZS / OY)</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2.5">
           {MONTH_LIST.map((m) => {
-            const mPayment = student.monthlyPayments?.[m.key] || { status: 'pending', amount: 450000 };
+            const mPayment = student.monthlyPayments?.[m.key] || { status: 'pending', amount: 100000 };
             const status = mPayment.status;
 
             return (

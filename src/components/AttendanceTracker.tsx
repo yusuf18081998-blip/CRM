@@ -378,6 +378,21 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                   </tr>
                 );
               })}
+
+              {filteredStudents.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <p className="text-sm font-semibold text-slate-300">
+                        Davomat olish uchun avval o'quvchilar kiritilishi kerak
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        "O'quvchilar & Login" bo'limiga o'tib, yangi o'quvchilarni qo'shing.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

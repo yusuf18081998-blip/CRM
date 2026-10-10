@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Student, AttendanceRecord, StudentSubmission } from '../types';
-import { UserPlus, Search, Edit2, Trash2, Award, UserCheck, Phone, Send, CheckCircle2, AlertTriangle, Key, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Search, Edit2, Trash2, Award, UserCheck, Phone, Send, CheckCircle2, AlertTriangle, Key, Copy, Check, Eye, EyeOff, Sparkles, RefreshCw } from 'lucide-react';
+import { generateUniqueUsername, generateUniquePassword } from '../utils/studentCredentials';
 
 interface StudentsManagerProps {
   students: Student[];
@@ -49,31 +50,43 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
   // Auto-generate username & password when typing name
   const handleNameChange = (name: string) => {
     setFullName(name);
-    if (!username || username.startsWith('ai_')) {
-      const parts = name.trim().toLowerCase().split(' ');
-      const genUser = parts[0] ? parts[0].replace(/[^a-z0-9]/g, '') : `oqvchi${students.length + 1}`;
+    if (name.trim().length >= 2) {
+      const genUser = generateUniqueUsername(name, students);
+      const genPass = generateUniquePassword(name, students);
       setUsername(genUser);
-    }
-    if (!password) {
-      setPassword(`ai45_${Math.floor(1000 + Math.random() * 9000)}`);
+      setPassword(genPass);
     }
   };
+
+  const handleManualRegenerate = () => {
+    const genUser = generateUniqueUsername(fullName.trim() || `talaba_${students.length + 1}`, students);
+    const genPass = generateUniquePassword(fullName.trim() || `talaba_${students.length + 1}`, students);
+    setUsername(genUser);
+    setPassword(genPass);
+  };
+
+  const isUsernameDuplicate = students.some(
+    (s) => s.username.toLowerCase() === username.trim().toLowerCase()
+  );
+  const isPasswordDuplicate = students.some((s) => s.password === password.trim());
 
   // Handle Create Student
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !username.trim() || !password.trim()) return;
+    if (isUsernameDuplicate) return;
 
+    // Oylik to'lov summasi: 100 000 so'm
     const initialMonthly: Student['monthlyPayments'] = {
-      sentyabr: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'paid', paidDate: new Date().toISOString().split('T')[0], amount: paymentStatus === 'scholarship' ? 0 : 450000 },
-      oktyabr: { status: paymentStatus === 'scholarship' ? 'scholarship' : paymentStatus === 'pending' ? 'pending' : 'paid', amount: paymentStatus === 'scholarship' ? 0 : 450000 },
-      noyabr: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 450000 },
-      dekabr: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 450000 },
-      yanvar: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 450000 },
-      fevral: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 450000 },
-      mart: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 450000 },
-      aprel: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 450000 },
-      may: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 450000 },
+      sentyabr: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'paid', paidDate: new Date().toISOString().split('T')[0], amount: paymentStatus === 'scholarship' ? 0 : 100000 },
+      oktyabr: { status: paymentStatus === 'scholarship' ? 'scholarship' : paymentStatus === 'pending' ? 'pending' : 'paid', amount: paymentStatus === 'scholarship' ? 0 : 100000 },
+      noyabr: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 100000 },
+      dekabr: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 100000 },
+      yanvar: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 100000 },
+      fevral: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 100000 },
+      mart: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 100000 },
+      aprel: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 100000 },
+      may: { status: paymentStatus === 'scholarship' ? 'scholarship' : 'pending', amount: paymentStatus === 'scholarship' ? 0 : 100000 },
     };
 
     const newId = `AI-45-${String(students.length + 1).padStart(2, '0')}`;
@@ -390,6 +403,24 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                   </tr>
                 );
               })}
+
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                        <UserPlus className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-200">
+                        Hozircha o'quvchilar ro'yxati bo'sh
+                      </p>
+                      <p className="text-xs text-slate-500 max-w-sm">
+                        Baza toza. O'quvchilarni o'zingiz kiritishingiz uchun yuqoridagi <strong>"Yangi O'quvchi & Login Qo'shish"</strong> tugmasini bosing.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -421,9 +452,20 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
 
               {/* Login and Password Fields */}
               <div className="p-3.5 rounded-lg bg-cyan-950/30 border border-cyan-500/30 space-y-3">
-                <div className="text-xs font-mono-code text-cyan-300 flex items-center gap-1.5 font-bold">
-                  <Key className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>O'QUVCHINING SHAXSIY KIRISH KALITLARI</span>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-mono-code text-cyan-300 flex items-center gap-1.5 font-bold">
+                    <Key className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>O'QUVCHINING SHAXSIY KIRISH KALITLARI (AVTO-GENERATSIYA)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleManualRegenerate}
+                    className="px-2.5 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-[11px] font-mono-code flex items-center gap-1 transition-all cursor-pointer"
+                    title="Ism-familiyasiga qarab yangi takrorlanmas login va parol generatsiya qilish"
+                  >
+                    <Sparkles className="w-3 h-3 text-cyan-400" />
+                    <span>Qayta Generatsiya</span>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -433,12 +475,26 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                     </label>
                     <input
                       type="text"
-                      placeholder="masalan: sardor_ai"
+                      placeholder="masalan: ali_valiyev"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-cyan-200 font-mono-code focus:outline-none focus:border-cyan-400"
+                      onChange={(e) => setUsername(e.target.value.toLowerCase().trim())}
+                      className={`w-full bg-slate-900 border rounded-lg px-3 py-2 text-xs font-mono-code focus:outline-none ${
+                        isUsernameDuplicate
+                          ? 'border-rose-500 text-rose-300 focus:border-rose-400'
+                          : 'border-slate-700 text-cyan-200 focus:border-cyan-400'
+                      }`}
                       required
                     />
+                    {isUsernameDuplicate ? (
+                      <p className="text-[11px] text-rose-400 mt-1 flex items-center gap-1 font-mono-code">
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        <span>Bu login band! Boshqa kiriting yoki 'Qayta Generatsiya'ni bosing.</span>
+                      </p>
+                    ) : username ? (
+                      <p className="text-[10px] text-emerald-400/80 mt-1 font-mono-code">
+                        ✓ Unikal login yaratildi
+                      </p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -448,21 +504,26 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                     <div className="flex items-center gap-1">
                       <input
                         type="text"
-                        placeholder="masalan: ai45_9988"
+                        placeholder="masalan: ali2013"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => setPassword(e.target.value.trim())}
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-amber-200 font-mono-code focus:outline-none focus:border-cyan-400"
                         required
                       />
                       <button
                         type="button"
-                        onClick={() => setPassword(`ai45_${Math.floor(1000 + Math.random() * 9000)}`)}
+                        onClick={handleManualRegenerate}
                         className="px-2 py-2 bg-slate-800 hover:bg-slate-700 text-[10px] text-cyan-300 rounded font-mono-code whitespace-nowrap cursor-pointer"
-                        title="Yangi tasodifiy parol"
+                        title="Ism-familiyasiga mos unikal parol"
                       >
                         Avto
                       </button>
                     </div>
+                    {password && (
+                      <p className="text-[10px] text-amber-400/80 mt-1 font-mono-code">
+                        ✓ Parol: {password}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -524,7 +585,7 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                     onChange={(e) => setPaymentStatus(e.target.value as any)}
                     className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
                   >
-                    <option value="paid">To'langan (450 000 so'm)</option>
+                    <option value="paid">To'langan (100 000 so'm / oy)</option>
                     <option value="scholarship">100% Grant (Maktab imtiyozi)</option>
                     <option value="pending">Kutilmoqda / Kechiktirilgan</option>
                   </select>
@@ -604,9 +665,28 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
 
               {/* Edit Login and Password */}
               <div className="p-3.5 rounded-lg bg-blue-950/30 border border-blue-500/30 space-y-3">
-                <div className="text-xs font-mono-code text-blue-300 flex items-center gap-1.5 font-bold">
-                  <Key className="w-3.5 h-3.5 text-blue-400" />
-                  <span>KIRISH LOGINI VA PAROLINI YANGILASH</span>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-mono-code text-blue-300 flex items-center gap-1.5 font-bold">
+                    <Key className="w-3.5 h-3.5 text-blue-400" />
+                    <span>KIRISH LOGINI VA PAROLINI YANGILASH</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newGenUser = generateUniqueUsername(editingStudent.fullName, students, editingStudent.id);
+                      const newGenPass = generateUniquePassword(editingStudent.fullName, students, editingStudent.id);
+                      setEditingStudent({
+                        ...editingStudent,
+                        username: newGenUser,
+                        password: newGenPass,
+                      });
+                    }}
+                    className="px-2.5 py-1 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 text-[11px] font-mono-code flex items-center gap-1 transition-all cursor-pointer"
+                    title="Ism-familiyasiga mos unikal login va parol generatsiya qilish"
+                  >
+                    <Sparkles className="w-3 h-3 text-blue-400" />
+                    <span>Avto-Generatsiya</span>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -691,7 +771,7 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                         ...editingStudent.monthlyPayments,
                         oktyabr: {
                           status: newStat,
-                          amount: newStat === 'scholarship' ? 0 : 450000,
+                          amount: newStat === 'scholarship' ? 0 : 100000,
                           paidDate: newStat === 'paid' ? (editingStudent.monthlyPayments?.['oktyabr']?.paidDate || new Date().toISOString().split('T')[0]) : undefined
                         }
                       };
@@ -703,7 +783,7 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                     }}
                     className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
                   >
-                    <option value="paid">To'langan (450 000 UZS)</option>
+                    <option value="paid">To'langan (100 000 so'm / oy)</option>
                     <option value="scholarship">100% Grant</option>
                     <option value="pending">Kutilmoqda (To'lanmagan)</option>
                   </select>
