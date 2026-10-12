@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Student, AttendanceRecord, Homework, StudentSubmission, ActiveTab, MONTH_LIST } from '../types';
-import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle } from 'lucide-react';
+import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle, LogOut } from 'lucide-react';
 
 interface StudentPortalProps {
   student: Student | null;
@@ -12,6 +12,7 @@ interface StudentPortalProps {
   onSubmitHomework: (sub: StudentSubmission) => void;
   setActiveTab: (tab: ActiveTab) => void;
   onOpenCertificateForMe: () => void;
+  onLogout?: () => void;
 }
 
 export const StudentPortal: React.FC<StudentPortalProps> = ({
@@ -24,6 +25,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   onSubmitHomework,
   setActiveTab,
   onOpenCertificateForMe,
+  onLogout,
 }) => {
   const [submittingHwId, setSubmittingHwId] = useState<string | null>(null);
   const [submissionUrl, setSubmissionUrl] = useState('');
@@ -134,25 +136,38 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             </div>
           </div>
 
-          {/* Student's credentials badge */}
-          <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-700 font-mono-code text-xs space-y-1">
-            <div className="text-[10px] text-slate-400 flex items-center gap-1 uppercase tracking-wider">
-              <Key className="w-3 h-3 text-cyan-400" />
-              <span>Shaxsiy Kirish Kalitlaringiz:</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Student's credentials badge */}
+            <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-700 font-mono-code text-xs space-y-1">
+              <div className="text-[10px] text-slate-400 flex items-center gap-1 uppercase tracking-wider">
+                <Key className="w-3 h-3 text-cyan-400" />
+                <span>Shaxsiy Kirish Kalitlaringiz:</span>
+              </div>
+              <div className="text-slate-200">
+                login: <strong className="text-cyan-300">@{student.username}</strong>
+              </div>
+              <div className="flex items-center gap-2 text-slate-200">
+                <span>parol: <strong className="text-amber-300">{showPassword ? student.password : '••••••••'}</strong></span>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-slate-400 hover:text-white cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                </button>
+              </div>
             </div>
-            <div className="text-slate-200">
-              login: <strong className="text-cyan-300">@{student.username}</strong>
-            </div>
-            <div className="flex items-center gap-2 text-slate-200">
-              <span>parol: <strong className="text-amber-300">{showPassword ? student.password : '••••••••'}</strong></span>
+
+            {onLogout && (
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-slate-400 hover:text-white cursor-pointer"
+                onClick={onLogout}
+                className="px-3.5 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 border border-red-400 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)] cursor-pointer shrink-0"
+                title="Tizimdan chiqish"
               >
-                {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                <LogOut className="w-4 h-4 text-white" />
+                <span>Chiqish</span>
               </button>
-            </div>
+            )}
           </div>
         </div>
       </div>

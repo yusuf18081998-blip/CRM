@@ -1,6 +1,6 @@
 import React from 'react';
 import { Student, AttendanceRecord, Homework, StudentSubmission, ActiveTab } from '../types';
-import { Users, Award, BookOpen, Calendar, CheckCircle2, TrendingUp, Sparkles, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { Users, Award, BookOpen, Calendar, CheckCircle2, TrendingUp, Sparkles, ChevronRight, ArrowUpRight, LogOut } from 'lucide-react';
 
 interface DashboardStatsProps {
   students: Student[];
@@ -10,6 +10,7 @@ interface DashboardStatsProps {
   completedLessons?: number[];
   setActiveTab: (tab: ActiveTab) => void;
   onOpenAddStudent: () => void;
+  onLogout?: () => void;
 }
 
 export const DashboardStats: React.FC<DashboardStatsProps> = ({
@@ -20,6 +21,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   completedLessons = [1, 2, 3, 4, 5, 6, 7, 8, 9],
   setActiveTab,
   onOpenAddStudent,
+  onLogout,
 }) => {
   // Calculate average attendance
   let totalPresentCount = 0;
@@ -117,6 +119,16 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
               <Users className="w-4 h-4" />
               <span>Yangi O'quvchi</span>
             </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:shadow-[0_0_22px_rgba(239,68,68,0.7)] flex items-center gap-2 cursor-pointer"
+                title="Tizimdan chiqish"
+              >
+                <LogOut className="w-4 h-4 text-white" />
+                <span>Chiqish</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

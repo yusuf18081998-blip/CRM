@@ -28,6 +28,7 @@ import { ScheduleAndHomework } from './components/ScheduleAndHomework';
 import { StudentPortal } from './components/StudentPortal';
 import { CertificateGenerator } from './components/CertificateGenerator';
 import { LoginModal } from './components/LoginModal';
+import { LoginScreen } from './components/LoginScreen';
 import { MonthlyPaymentsManager } from './components/MonthlyPaymentsManager';
 
 export default function App() {
@@ -78,10 +79,10 @@ export default function App() {
     }
   });
 
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  // Authentication State: har doim tizimga kirish (Login) oynasida ochiladi
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [role, setRole] = useState<UserRole>('admin');
-  const [activeStudent, setActiveStudent] = useState<Student | null>(() => students[0] || null);
+  const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Navigation State
@@ -149,7 +150,10 @@ export default function App() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setIsLoginModalOpen(true);
+    setActiveStudent(null);
+    setRole('admin');
+    setActiveTab('overview');
+    setIsLoginModalOpen(false);
   };
 
   // Handlers for Students CRUD
@@ -270,8 +274,14 @@ export default function App() {
         activeStudent={activeStudent}
       />
 
-      {/* Main Viewport Container */}
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* Agar tizimga kirmagan bo'lsa, LoginScreen ochiladi */}
+      {!isAuthenticated ? (
+        <LoginScreen
+          students={students}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      ) : (
+        <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
         {/* Banner if in Student Mode */}
         {role === 'student' && activeStudent && activeTab !== 'portal' && (
@@ -298,6 +308,7 @@ export default function App() {
             completedLessons={completedLessons}
             setActiveTab={setActiveTab}
             onOpenAddStudent={() => setIsAddStudentModalOpen(true)}
+            onLogout={handleLogout}
           />
         )}
 
@@ -362,6 +373,7 @@ export default function App() {
             submissions={submissions}
             onSubmitHomework={handleSubmitHomework}
             setActiveTab={setActiveTab}
+            onLogout={handleLogout}
             onOpenCertificateForMe={() => {
               if (activeStudent) {
                 setSelectedStudentForCert(activeStudent.fullName);
@@ -378,15 +390,16 @@ export default function App() {
             initialStudentName={selectedStudentForCert}
           />
         )}
-      </main>
+        </main>
+      )}
 
-      {/* Login Modal */}
+      {/* Login Modal (agar tizim ichida turib hisob almashtirilsa) */}
       <LoginModal
         students={students}
-        isOpen={isLoginModalOpen || !isAuthenticated}
+        isOpen={isLoginModalOpen}
         onLoginSuccess={handleLoginSuccess}
         onClose={() => setIsLoginModalOpen(false)}
-        allowClose={isAuthenticated}
+        allowClose={true}
       />
 
       {/* Cyber OS Minimal Footer */}
