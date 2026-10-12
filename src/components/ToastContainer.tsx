@@ -17,17 +17,10 @@ interface ToastContainerProps {
   onDismiss: (id: string) => void;
 }
 
-export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismiss }) => {
-  return (
-    <aside
-      aria-label="Bildirishnomalar"
-      className="fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm sm:max-w-md w-full pointer-events-none px-3 sm:px-0"
-    >
-      {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
-      ))}
-    </aside>
-  );
+// Saytning o'zida ichki toastlar chiqmasligi uchun null qaytariladi.
+// Bildirishnomalar faqat va faqat Chrome tizim xabarnomasi orqali chiqadi.
+export const ToastContainer: React.FC<ToastContainerProps> = () => {
+  return null;
 };
 
 const ToastItem: React.FC<{ toast: AppToast; onDismiss: (id: string) => void }> = ({

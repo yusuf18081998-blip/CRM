@@ -211,7 +211,15 @@ export const TopNav: React.FC<TopNavProps> = ({
                   </>
                 ) : (
                   <>
-                    <User className="w-3.5 h-3.5 text-cyan-400" />
+                    {activeStudent?.avatarUrl ? (
+                      <img
+                        src={activeStudent.avatarUrl}
+                        alt={activeStudent.fullName}
+                        className="w-4 h-4 rounded-full object-cover border border-cyan-400/80"
+                      />
+                    ) : (
+                      <User className="w-3.5 h-3.5 text-cyan-400" />
+                    )}
                     <span className="text-cyan-200 font-semibold truncate max-w-[120px]">
                       {activeStudent?.fullName.split(' ')[0]}
                     </span>

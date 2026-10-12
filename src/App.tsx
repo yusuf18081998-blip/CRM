@@ -11,9 +11,7 @@ import {
   StudentSubmission,
   ActiveTab,
   UserRole,
-  AppToast,
 } from './types';
-import { ToastContainer } from './components/ToastContainer';
 import { BellPermissionModal } from './components/BellPermissionModal';
 import {
   playBellSound,
@@ -102,9 +100,6 @@ export default function App() {
     students[0]?.fullName || ''
   );
 
-  // Animated Toast notifications state
-  const [toasts, setToasts] = useState<AppToast[]>([]);
-
   // Sound and Bell permission state
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {
@@ -131,20 +126,20 @@ export default function App() {
     }
   }, []);
 
-  // Boshqa ochiq tablar / oynalar o'rtasida real-vaqt sinxronlash
+  // Boshqa ochiq tablar / oynalar o'rtasida real-vaqt sinxronlash (faqat Chrome bildirishnomasi chiqariladi)
   useEffect(() => {
     if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
     const channel = new BroadcastChannel('maktab45_live_sync');
     channel.onmessage = (event) => {
       const data = event.data;
-      if (data && data.type === 'SYNC_TOAST' && data.toast) {
-        setToasts((prev) => [data.toast, ...prev].slice(0, 5));
-        if (soundEnabled) {
+      if (data && (data.type === 'SYNC_NOTIFICATION' || data.type === 'SYNC_TOAST')) {
+        const item = data.notification || data.toast;
+        if (item && soundEnabled) {
           showSystemNotification({
-            title: data.toast.title,
-            body: data.toast.message,
-            type: data.toast.type,
-            tag: data.toast.id,
+            title: item.title,
+            body: item.message,
+            type: item.type,
+            tag: item.id,
           });
         }
       }
@@ -154,17 +149,64 @@ export default function App() {
     };
   }, [soundEnabled]);
 
+  // Faqat va faqat Chrome / Tizim bildirishnomasi va qo'ng'iroq ohangini chiqarish (saytning o'zida toast chiqmaydi)
+  const sendNotification = (
+    notif: {
+      type?: 'grade' | 'homework' | 'success' | 'warning' | 'generic' | 'info';
+      title: string;
+      message: string;
+      duration?: number;
+    },
+    broadcast: boolean = true
+  ) => {
+    const id = `maktab45-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const soundType =
+      notif.type === 'grade'
+        ? 'grade'
+        : notif.type === 'homework'
+        ? 'homework'
+        : notif.type === 'success'
+        ? 'success'
+        : notif.type === 'warning'
+        ? 'warning'
+        : 'generic';
+
+    if (soundEnabled) {
+      showSystemNotification({
+        title: notif.title,
+        body: notif.message,
+        type: soundType,
+        tag: id,
+      });
+    }
+
+    if (broadcast && typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const channel = new BroadcastChannel('maktab45_live_sync');
+        channel.postMessage({
+          type: 'SYNC_NOTIFICATION',
+          notification: { ...notif, id },
+        });
+        channel.close();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  // pushToast chaqiriqlari endi to'g'ridan-to'g'ri Chrome tizim bildirishnomasiga yo'naltiriladi
+  const pushToast = sendNotification;
+
   const handleAllowBell = () => {
     setSoundEnabled(true);
     localStorage.setItem('maktab45_sound_enabled_v5', 'true');
     localStorage.setItem('maktab45_bell_permission_asked_v6', 'true');
     setIsBellModalOpen(false);
     playBellSound('success');
-    pushToast({
+    sendNotification({
       type: 'success',
       title: "Bildirishnomalar va Qo'ng'iroq Yoqildi! 🔔",
       message: "Saytdan tashqarida bo'lsangiz ham yangi vazifalar va baholar ekranga chiqadi.",
-      duration: 5000,
     });
   };
 
@@ -181,59 +223,12 @@ export default function App() {
     localStorage.setItem('maktab45_sound_enabled_v5', JSON.stringify(nextVal));
     if (nextVal) {
       playBellSound('success');
-      pushToast({
+      sendNotification({
         type: 'info',
         title: "Qo'ng'iroq yoqildi 🔔",
         message: "Bildirishnoma qo'ng'irog'i faollashtirildi (saytdan tashqarida ham chiqadi).",
-        duration: 3000,
       });
     }
-  };
-
-  const pushToast = (toast: Omit<AppToast, 'id'>, broadcast: boolean = true) => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const newToast: AppToast = {
-      ...toast,
-      id,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    setToasts((prev) => [newToast, ...prev].slice(0, 5)); // Keep max 5 active toasts
-
-    // Saytdan tashqarida (boshqa oynada / fonda) tursangiz ham chiqadigan tizim bildirishnomasi & qo'ng'iroq
-    if (soundEnabled) {
-      const soundType =
-        toast.type === 'grade'
-          ? 'grade'
-          : toast.type === 'homework'
-          ? 'homework'
-          : toast.type === 'success'
-          ? 'success'
-          : toast.type === 'warning'
-          ? 'warning'
-          : 'generic';
-
-      showSystemNotification({
-        title: toast.title,
-        body: toast.message,
-        type: soundType,
-        tag: id,
-      });
-    }
-
-    // Boshqa ochiq tablar / fondagi oynalarga uzatish
-    if (broadcast && typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      try {
-        const channel = new BroadcastChannel('maktab45_live_sync');
-        channel.postMessage({ type: 'SYNC_TOAST', toast: newToast });
-        channel.close();
-      } catch {
-        // ignore
-      }
-    }
-  };
-
-  const handleDismissToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
   // Save to LocalStorage on updates
@@ -328,9 +323,9 @@ export default function App() {
         });
       };
 
-      // Tizimga kirganda 1.5 soniyadan so'ng va har 80 soniyada takroran eslatadi
+      // Tizimga kirganda 1.5 soniyadan so'ng va har 3 soatda (10,800,000 ms) takroran eslatadi
       const initialTimer = setTimeout(sendPaymentWarning, 1500);
-      const recurringInterval = setInterval(sendPaymentWarning, 80000);
+      const recurringInterval = setInterval(sendPaymentWarning, 3 * 60 * 60 * 1000); // Har 3 soatda
 
       return () => {
         clearTimeout(initialTimer);
@@ -640,6 +635,7 @@ export default function App() {
             student={activeStudent}
             allStudents={students}
             onSelectStudent={(st) => setActiveStudent(st)}
+            onUpdateStudent={handleUpdateStudent}
             attendance={attendance}
             homework={homework}
             submissions={submissions}
@@ -673,9 +669,6 @@ export default function App() {
         onClose={() => setIsLoginModalOpen(false)}
         allowClose={true}
       />
-
-      {/* Interaktiv Animatsiyali Bildirishnomalar (Toast) */}
-      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
 
       {/* Qo'ng'iroq va Ovozli Bildirishnoma Ruxsat Oynasi */}
       <BellPermissionModal

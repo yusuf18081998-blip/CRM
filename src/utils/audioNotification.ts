@@ -155,7 +155,8 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     return null;
   }
   try {
-    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    const swUrl = new URL('sw.js', window.location.href).href;
+    const reg = await navigator.serviceWorker.register(swUrl);
     return reg;
   } catch (err) {
     console.warn('Service worker registration failed:', err);
@@ -214,7 +215,21 @@ export function flashTabTitle(alertText: string) {
 }
 
 /**
- * Deliver System Notification (Windows Action Center / Mac Notification Center / Android Tray)
+ * Helper to get absolute logo URL
+ */
+function getLogoUrl(): string {
+  if (typeof window !== 'undefined') {
+    try {
+      return new URL('logo.svg', window.location.href).href;
+    } catch {
+      return '/logo.svg';
+    }
+  }
+  return '/logo.svg';
+}
+
+/**
+ * Deliver Chrome / System Desktop Notification
  * Works even when user is OUTSIDE the site (saytdan tashqarida turganda ham chiqadi)
  */
 export function showSystemNotification(options: {
@@ -230,81 +245,75 @@ export function showSystemNotification(options: {
   // 1. Ovozli qo'ng'iroq (nutqsiz faqat jarangdor ohang)
   playBellSound(type);
 
-  // 2. Agar foydalanuvchi boshqa oynada bo'lsa, tab nomini miltillatamiz
+  // 2. Agar foydalanuvchi boshqa tabda bo'lsa, tab nomini miltillatamiz
   if (typeof document !== 'undefined' && document.hidden) {
     flashTabTitle(title);
   }
 
-  // 3. Haqiqiy brauzer/tizim xabarnomasi
+  // 3. Haqiqiy Chrome / Tizim bildirishnomasi
   if (!('Notification' in window)) {
     return;
   }
 
-  const pngIcon = getNotificationIconPng();
+  const logoUrl = getLogoUrl();
+  const pngIcon = getNotificationIconPng() || logoUrl;
+  const notifTag = tag || `maktab45-${Date.now()}`;
 
-  const fireNative = () => {
+  const deliverChromeNotification = async () => {
+    let delivered = false;
+
+    // Desktop Chrome / Edge / Firefox / Windows notification
     try {
-      // 3A. Service Worker orqali yuborish (eng ishonchli fon xabarnomasi)
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.ready
-          .then((reg) => {
-            reg.showNotification(title, {
-              body,
-              icon: pngIcon || '/logo.svg',
-              badge: pngIcon || '/logo.svg',
-              tag: tag || `maktab45-${Date.now()}`,
-              data: { url: window.location.href },
-              vibrate: [250, 100, 250],
-              requireInteraction: true,
-            } as NotificationOptions);
-          })
-          .catch(() => {
-            directNotificationFallback(title, body, tag, pngIcon);
-          });
-      } else {
-        directNotificationFallback(title, body, tag, pngIcon);
+      const notif = new Notification(title, {
+        body,
+        icon: pngIcon,
+        badge: pngIcon,
+        tag: notifTag,
+        requireInteraction: true,
+      } as NotificationOptions);
+
+      notif.onclick = () => {
+        window.focus();
+        notif.close();
+      };
+      delivered = true;
+    } catch {
+      // Direct constructor may fail on mobile Chrome, fallback to SW below
+      delivered = false;
+    }
+
+    // Android Chrome or SW-required environments
+    if (!delivered && 'serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.showNotification) {
+          await reg.showNotification(title, {
+            body,
+            icon: pngIcon,
+            badge: pngIcon,
+            tag: notifTag,
+            data: { url: window.location.href },
+            vibrate: [250, 100, 250],
+            requireInteraction: true,
+          } as NotificationOptions);
+        }
+      } catch (err) {
+        console.warn('SW notification fallback failed:', err);
       }
-    } catch (err) {
-      console.warn('Native notification delivery failed:', err);
-      directNotificationFallback(title, body, tag, pngIcon);
     }
   };
 
   if (Notification.permission === 'granted') {
-    fireNative();
+    deliverChromeNotification();
   } else if (Notification.permission === 'default') {
-    // Ruxsat so'rab, darhol chiqaramiz
+    // If permission has not been asked, request it
     Notification.requestPermission()
       .then((perm) => {
         if (perm === 'granted') {
-          fireNative();
+          deliverChromeNotification();
         }
       })
       .catch(() => {});
-  }
-}
-
-function directNotificationFallback(
-  title: string,
-  body: string,
-  tag?: string,
-  icon?: string
-) {
-  try {
-    const notif = new Notification(title, {
-      body,
-      icon: icon || '/logo.svg',
-      badge: icon || '/logo.svg',
-      tag: tag || `maktab45-${Date.now()}`,
-      requireInteraction: true,
-    } as NotificationOptions);
-
-    notif.onclick = () => {
-      window.focus();
-      notif.close();
-    };
-  } catch (e) {
-    console.warn('Fallback Notification failed:', e);
   }
 }
 

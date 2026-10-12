@@ -118,14 +118,83 @@ export const CURRICULUM_72_LESSONS: CurriculumLesson[] = [
   { number: 72, week: 36, dayOfWeek: 'Chorshanba', topic: "4-CHORAK AMALIY NAZORAT ISHI — YILLIK LOYIHA HIMOYASI", quarter: 4, isExam: true },
 ];
 
-// O'QUVCHILAR BAZASI: Toza (foydalanuvchi o'zi kiritadi)
-export const INITIAL_STUDENTS: Student[] = [];
+// Standart Namunaviy O'quvchilar Bazasi (Yangi qurilmalar va telefonlarda xatoliksiz ishlashi uchun)
+export const SAMPLE_DEFAULT_STUDENTS: Student[] = [
+  {
+    id: 'AI-45-01',
+    fullName: "Jasur To'xtayev",
+    username: 'jasur_toxtayev',
+    password: 'jasur2013',
+    grade: '8-A sinf',
+    phone: '+998 90 123 45 67',
+    telegramUsername: '@jasur_ai',
+    enrolledDate: '2026-09-02',
+    notes: "Sun'iy intellekt kursi faol o'quvchisi",
+    monthlyPayments: createInitialMonthlyPayments(false, 'oktyabr'),
+  },
+  {
+    id: 'AI-45-02',
+    fullName: "Malika Karimova",
+    username: 'malika_karimova',
+    password: 'malika2013',
+    grade: '9-B sinf',
+    phone: '+998 91 234 56 78',
+    telegramUsername: '@malika_k',
+    enrolledDate: '2026-09-02',
+    notes: "Generativ dizayn va prompt mutaxassisi",
+    monthlyPayments: createInitialMonthlyPayments(true),
+  },
+  {
+    id: 'AI-45-03',
+    fullName: "Bobur Mirzayev",
+    username: 'bobur_mirzayev',
+    password: 'bobur2013',
+    grade: '10-A sinf',
+    phone: '+998 93 345 67 89',
+    telegramUsername: '@bobur_ai',
+    enrolledDate: '2026-09-02',
+    notes: "Python va AI bot yo'nalishi",
+    monthlyPayments: createInitialMonthlyPayments(false),
+  },
+];
 
-// DAVOMAT JURNALI: Toza (darslar o'tilganda kiritiladi)
+// O'QUVCHILAR BAZASI
+export const INITIAL_STUDENTS: Student[] = SAMPLE_DEFAULT_STUDENTS;
+
+// DAVOMAT JURNALI
 export const INITIAL_ATTENDANCE: AttendanceRecord[] = [];
 
-// UY VAZIFALARI: Toza (ustoz dars davomida qo'shadi)
-export const INITIAL_HOMEWORK: Homework[] = [];
+// UY VAZIFALARI
+export const INITIAL_HOMEWORK: Homework[] = [
+  {
+    id: 'HW-01',
+    lessonNumber: 8,
+    title: "Zero-shot va Few-shot Prompting Taqqoslash",
+    description: "ChatGPT va Claude yordamida bitta murakkab vazifani avval noaniq, keyin few-shot uslubida berib, javoblarni tahlil qiling.",
+    deadline: "2026-10-18",
+    createdAt: "2026-10-10",
+  },
+  {
+    id: 'HW-02',
+    lessonNumber: 9,
+    title: "Bosqichma-bosqich Vazifa Dizayni (Chain-of-thought)",
+    description: "Sun'iy intellektga mantiqiy masalani bosqichlarga bo'lib yechish bo'yicha prompt tuzing va natijani havola ko'rinishida yuboring.",
+    deadline: "2026-10-22",
+    createdAt: "2026-10-12",
+  },
+];
 
-// TOPSHIRIQ JAVOBLARI: Toza (o'quvchilar yuboradi)
-export const INITIAL_SUBMISSIONS: StudentSubmission[] = [];
+// TOPSHIRIQ JAVOBLARI
+export const INITIAL_SUBMISSIONS: StudentSubmission[] = [
+  {
+    id: 'SUB-101',
+    homeworkId: 'HW-01',
+    studentId: 'AI-45-01',
+    submittedAt: '2026-10-11 14:20',
+    content: 'https://chatgpt.com/share/prompt-analiz-jasur',
+    status: 'graded',
+    score: 95,
+    feedback: "A'lo darajada bajarilgan! Few-shot namunalari juda aniq tanlangan.",
+    gradedAt: '2026-10-11 16:00',
+  },
+];

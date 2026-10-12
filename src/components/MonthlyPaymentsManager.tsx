@@ -298,9 +298,20 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
                   <tr key={student.id} className="hover:bg-slate-900/50 transition-colors">
                     {/* Student Info */}
                     <td className="py-3.5 px-4 font-medium whitespace-nowrap">
-                      <div className="font-semibold text-slate-100">{student.fullName}</div>
-                      <div className="text-[11px] font-mono-code text-cyan-400/80">
-                        {student.id} · @{student.username}
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-cyan-950 border border-cyan-500/30 flex items-center justify-center font-mono-code font-bold text-cyan-300 text-xs overflow-hidden shrink-0">
+                          {student.avatarUrl ? (
+                            <img src={student.avatarUrl} alt={student.fullName} className="w-full h-full object-cover" />
+                          ) : (
+                            student.fullName.charAt(0)
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-100">{student.fullName}</div>
+                          <div className="text-[11px] font-mono-code text-cyan-400/80">
+                            {student.id} · @{student.username}
+                          </div>
+                        </div>
                       </div>
                     </td>
 

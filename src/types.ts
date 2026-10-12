@@ -31,6 +31,7 @@ export interface Student {
   monthlyPayments: Record<PaymentMonthKey, { status: 'paid' | 'pending' | 'scholarship'; paidDate?: string; amount: number }>;
   scholarshipReason?: string;
   avatarSeed: string;
+  avatarUrl?: string; // Shaxsiy yuklangan profil rasmi (Base64 yoki URL)
   notes?: string;
 }
 

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Student, AttendanceRecord, Homework, StudentSubmission, ActiveTab, MONTH_LIST, PaymentMonthKey } from '../types';
-import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle, LogOut, Volume2 } from 'lucide-react';
+import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle, LogOut, Volume2, Camera } from 'lucide-react';
 import { playBellSound } from '../utils/audioNotification';
+import { AvatarUploadModal } from './AvatarUploadModal';
 
 interface StudentPortalProps {
   student: Student | null;
   allStudents: Student[];
   onSelectStudent: (s: Student) => void;
+  onUpdateStudent?: (s: Student) => void;
   attendance: AttendanceRecord[];
   homework: Homework[];
   submissions: StudentSubmission[];
@@ -20,6 +22,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   student,
   allStudents,
   onSelectStudent,
+  onUpdateStudent,
   attendance,
   homework,
   submissions,
@@ -31,6 +34,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
   const [submittingHwId, setSubmittingHwId] = useState<string | null>(null);
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   if (!student) {
     return (
@@ -125,9 +129,32 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
       <div className="cyber-glass rounded-xl p-6 border border-cyan-500/30 relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-cyan-950 border-2 border-cyan-400 flex items-center justify-center text-cyan-300 font-orbitron font-extrabold text-2xl shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-              {student.fullName.charAt(0)}
+            <div className="relative group shrink-0">
+              <div
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-cyan-950 border-2 border-cyan-400 flex items-center justify-center text-cyan-300 font-orbitron font-extrabold text-2xl sm:text-3xl shadow-[0_0_25px_rgba(6,182,212,0.4)] overflow-hidden cursor-pointer transition-transform group-hover:scale-105"
+                title="Profil rasmini o'zgartirish"
+              >
+                {student.avatarUrl ? (
+                  <img
+                    src={student.avatarUrl}
+                    alt={student.fullName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{student.fullName.charAt(0)}</span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.7)] transition-all cursor-pointer border-2 border-slate-950"
+                title="Profil rasmini o'zgartirish"
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </button>
             </div>
+
             <div>
               <div className="flex items-center gap-2 text-xs font-mono-code text-cyan-400 mb-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -135,12 +162,20 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                 <span aria-hidden="true">·</span>
                 <span>ID: {student.id}</span>
               </div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 {student.fullName}
               </h1>
               <p className="text-xs text-slate-300 mt-0.5">
                 45-Maktab {student.grade} · Ustoz M.Xo'jayev Sun'iy Intellekt Kursi
               </p>
+              <button
+                type="button"
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="mt-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono-code transition-all cursor-pointer"
+              >
+                <Camera className="w-3 h-3 text-cyan-400" />
+                <span>{student.avatarUrl ? "Rasmni almashtirish" : "Profil rasmi o'rnatish"}</span>
+              </button>
             </div>
           </div>
 
@@ -592,6 +627,22 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
           <span>Sertifikatimni Ko'rish & Yuklash</span>
         </button>
       </div>
+
+      {/* Profil Rasmini Yuklash / O'zgartirish Modali */}
+      <AvatarUploadModal
+        isOpen={isAvatarModalOpen}
+        currentAvatarUrl={student.avatarUrl}
+        studentName={student.fullName}
+        onClose={() => setIsAvatarModalOpen(false)}
+        onSave={(newAvatarUrl) => {
+          if (onUpdateStudent) {
+            onUpdateStudent({
+              ...student,
+              avatarUrl: newAvatarUrl,
+            });
+          }
+        }}
+      />
     </div>
   );
 };
