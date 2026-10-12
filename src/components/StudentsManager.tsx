@@ -42,7 +42,7 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('+998 9');
   const [telegramUsername, setTelegramUsername] = useState('@');
-  const [grade, setGrade] = useState('10-A sinf');
+  const [grade, setGrade] = useState('5-A sinf');
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'pending' | 'scholarship'>('paid');
   const [scholarshipReason, setScholarshipReason] = useState('');
   const [notes, setNotes] = useState('');
@@ -126,7 +126,7 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
     setPassword('');
     setPhone('+998 9');
     setTelegramUsername('@');
-    setGrade('10-A sinf');
+    setGrade('5-A sinf');
     setPaymentStatus('paid');
     setScholarshipReason('');
     setNotes('');
@@ -223,7 +223,11 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
               onChange={(e) => setGradeFilter(e.target.value)}
               className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:border-cyan-400"
             >
-              <option value="all">Barcha sinflar</option>
+              <option value="all">Barcha sinflar (5-11)</option>
+              <option value="5">5-sinflar</option>
+              <option value="6">6-sinflar</option>
+              <option value="7">7-sinflar</option>
+              <option value="8">8-sinflar</option>
               <option value="9">9-sinflar</option>
               <option value="10">10-sinflar</option>
               <option value="11">11-sinflar</option>
@@ -565,6 +569,18 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                     onChange={(e) => setGrade(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
                   >
+                    <option value="5-A sinf">5-A sinf</option>
+                    <option value="5-B sinf">5-B sinf</option>
+                    <option value="5-V sinf">5-V sinf</option>
+                    <option value="6-A sinf">6-A sinf</option>
+                    <option value="6-B sinf">6-B sinf</option>
+                    <option value="6-V sinf">6-V sinf</option>
+                    <option value="7-A sinf">7-A sinf</option>
+                    <option value="7-B sinf">7-B sinf</option>
+                    <option value="7-V sinf">7-V sinf</option>
+                    <option value="8-A sinf">8-A sinf</option>
+                    <option value="8-B sinf">8-B sinf</option>
+                    <option value="8-V sinf">8-V sinf</option>
                     <option value="9-A sinf">9-A sinf</option>
                     <option value="9-B sinf">9-B sinf</option>
                     <option value="9-V sinf">9-V sinf</option>
@@ -573,6 +589,7 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                     <option value="10-V sinf">10-V sinf</option>
                     <option value="11-A sinf">11-A sinf</option>
                     <option value="11-B sinf">11-B sinf</option>
+                    <option value="11-V sinf">11-V sinf</option>
                   </select>
                 </div>
 
@@ -752,11 +769,35 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
                   </label>
                   <input
                     type="text"
+                    list="edit-grade-options"
                     value={editingStudent.grade}
                     onChange={(e) => setEditingStudent({ ...editingStudent, grade: e.target.value })}
                     className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
                     required
                   />
+                  <datalist id="edit-grade-options">
+                    <option value="5-A sinf" />
+                    <option value="5-B sinf" />
+                    <option value="5-V sinf" />
+                    <option value="6-A sinf" />
+                    <option value="6-B sinf" />
+                    <option value="6-V sinf" />
+                    <option value="7-A sinf" />
+                    <option value="7-B sinf" />
+                    <option value="7-V sinf" />
+                    <option value="8-A sinf" />
+                    <option value="8-B sinf" />
+                    <option value="8-V sinf" />
+                    <option value="9-A sinf" />
+                    <option value="9-B sinf" />
+                    <option value="9-V sinf" />
+                    <option value="10-A sinf" />
+                    <option value="10-B sinf" />
+                    <option value="10-V sinf" />
+                    <option value="11-A sinf" />
+                    <option value="11-B sinf" />
+                    <option value="11-V sinf" />
+                  </datalist>
                 </div>
 
                 <div>

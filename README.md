@@ -1,62 +1,65 @@
 # 🚀 45-Maktab Sun'iy Intellekt OS — Cyber Dashboard
 
-45-maktab ixtisoslashtirilgan **Sun'iy Intellekt** kursi uchun maxsus ishlab chiqilgan zamonaviy **Cyber OS / Glassmorphism HUD Dashboard** tizimi.
+45-maktab ixtisoslashtirilgan **Sun'iy Intellekt** kursi uchun maxsus ishlab chiqilgan zamonaviy **Cyber OS / Glassmorphism HUD Dashboard** boshqaruv tizimi (5–11 sinflar uchun mo'ljallangan).
 
 ---
 
-## ❓ Nega GitHub Pages'da sayt ochilmay yoki xato bo'lib qoladi?
-
-### Asosiy sabab:
-Loyiha zamonaviy **React + TypeScript + Vite** texnologiyasida yaratilgan. Asosiy sahifa `src/main.tsx` fayliga murojaat qiladi:
-```html
-<script type="module" src="/src/main.tsx"></script>
-```
-⚠️ **Brauzerlar `.tsx` (TypeScript/React) kodini to'g'ridan-to'g'ri o'qiy olmaydi.** Ular faqat toza `.js` (JavaScript) fayllarni tushunadi. 
-Shu sababli brauzer konsolida:
-> `Failed to load module script: The server responded with a non-JavaScript MIME type` yoki `404 Not Found`
-
-xatosi chiqadi va ekran ochilmay, bo'sh bo'lib qoladi.
+## 🎯 5–11 Sinflar uchun To'liq Moslashtirildi
+- **Sinflar diapazoni:** 5-sinfdan 11-sinfgacha barcha sinflar (5-A, 5-B, ..., 11-A, 11-B, 11-V) qamrab olingan.
+- **Filtrlar:** Boshqaruv paneli, O'quvchilar bazasi, Davomat jurnali va Oylik to'lovlar oynalarida 5, 6, 7, 8, 9, 10, 11-sinflar bo'yicha alohida saralash imkoniyati yaratilgan.
+- **O'quvchi qo'shish va tahrirlash:** Yangi o'quvchi qo'shayotganda yoki tahrirlayotganda 5-11 sinflardan qulay tanlash (select/datalist) mavjud.
 
 ---
 
-## ✅ YECHIM: Saytni GitHub Pages'da 1 daqiqada ishga tushirish
+## ❓ Nega GitHub'da sayt ochilmay yoki xato bo'lib qolayotgan edi?
 
-Loyiha ichiga maxsus **GitHub Actions (`.github/workflows/deploy.yml`)** avtomatlashtirilgan tizimi qo'shildi!
+### 1. Brauzer `.tsx` ni to'g'ridan-to'g'ri o'qiy olmaydi:
+Loyiha zamonaviy **React + TypeScript + Vite** texnologiyasida yozilgan. Asosiy sahifa `src/main.tsx` ga ulanadi. Brauzerlar esa faqat tayyor JavaScript (`.js`) ni o'qiy oladi. Shu sababli GitHub repository'ni to'g'ridan-to'g'ri branch orqali ochganda bo'sh oq sahifa yoki `404` xatosi chiqadi.
 
-### Buni yoqish uchun:
-1. GitHub'dagi o'z repository sahifangizga kiring.
-2. Yuqoridagi **⚙️ Settings** tugmasini bosing.
-3. Chap tarafdagi menyudan **Pages** bo'limini tanlang.
-4. **Build and deployment** bo'limidagi **Source** menyusini oching:
-   - *"Deploy from a branch"* o'rniga **"GitHub Actions"** ni tanlang!
-5. Bo'ldi! Kodni GitHub'ga push qilishingiz bilan GitHub o'zi loyihani avtomatik yig'adi (`npm run build`) va jonli havolani (masalan: `https://username.github.io/repository/`) taqdim etadi.
+### 2. GitHub Actions dependency xatosi (Tuzatildi ✅):
+Ilgari GitHub Actions CI/CD jarayonida npm kutubxonalari mos kelmasligi (esbuild / vite peer dependency ziddiyati) va `package-lock.json` yo'qligi tufayli build jarayoni to'xtab qolayotgan edi. 
+- Bu ziddiyat to'liq bartaraf etildi.
+- Yangi `.github/workflows/deploy.yml` fayli qo'shildi.
+- `package-lock.json` to'g'ri generatsiya qilindi.
+- GitHub Pages uchun `404.html` va `.nojekyll` avtomatik yaratilishi ta'minlandi.
+
+---
+
+## ✅ GitHub Pages'da Saytni 1 Daqiqada Ishga Tushirish
+
+Loyihani GitHub Pages'da xatosiz ishga tushirish uchun quyidagi 3 qadamni bajaring:
+
+1. **GitHub'dagi o'z repository sahifangizga kiring.**
+2. Yuqori menyudan **⚙️ Settings** (Sozlamalar) bo'limini oching.
+3. Chap ustundan **Pages** bandini bosing.
+4. **Build and deployment** bo'limida **Source** menyusini oching va:
+   - ⚡ **"GitHub Actions"** ni tanlang! (Hech qanday branch tanlash shart emas, aynan "GitHub Actions").
+5. Tamom! GitHub Actions avtomatik ravishda loyihani yig'adi (`npm run build`) va 1–2 daqiqada sizga jonli havolani (masalan: `https://username.github.io/repo/`) taqdim etadi.
 
 ---
 
 ## 💻 Kompyuterda (Local) ishga tushirish
 
-Loyihani o'z kompyuteringizda ishlatish uchun:
-
 ```bash
-# 1. Kerakli kutubxonalarni o'rnatish
+# 1. Kutubxonalarni o'rnatish
 npm install
 
-# 2. Dasturni ishga tushirish
+# 2. Dasturni ishga tushirish (Local dev server)
 npm run dev
-```
-Brauzerda `http://localhost:3000` manzilini oching.
 
-### 📦 Tayyor sayt paketini (dist) yaratish:
-```bash
+# 3. GitHub uchun tayyor paket (dist) yaratish
 npm run build
 ```
-Bu buyruqdan so'ng `dist/` papkasida to'liq tayyor, kompilyatsiya qilingan statik veb-sayt hosil bo'ladi.
 
 ---
 
 ## 🔑 Tizimga kirish ma'lumotlari
 
-Tizimga kirish bitta yagona oynadan amalga oshiriladi:
+- **Ustoz (Admin) uchun:**
+  - Login: `mxojayev` (yoki `ustoz`)
+  - Parol: `xojayev2013`
+  - *Imkoniyatlari:* 5-11 sinf o'quvchilarini boshqarish, unikal login/parollarni bir zumda generatsiya qilish, oylik to'lovlar nazorati (100 000 so'm), davomat olish, baholash va rasmiy sertifikat berish.
+
 - **O'quvchilar uchun:**
-  - O'quvchilar login va parollari Ustoz tomonidan O'quvchilar bazasida yaratiladi (masalan: `azizbek` / `ai45_user1`).
-  - *Imkoniyatlari:* Shaxsiy davomat ko'rsatkichi, uy vazifalari topshirish, oylik to'lov holati, o'zlashtirish va shaxsiy sertifikat.
+  - Login va parol Ustoz tomonidan o'quvchilar bazasida avtomatik yaratiladi (masalan: ism-familiyaga qarab unikal qilib beriladi).
+  - *Imkoniyatlari:* Shaxsiy davomat, uy vazifalarini ko'rish va topshirish, to'lov holati hamda shaxsiy AI sertifikati.

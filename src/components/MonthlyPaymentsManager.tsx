@@ -14,6 +14,7 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
   const [selectedMonth, setSelectedMonth] = useState<PaymentMonthKey>('oktyabr');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [gradeFilter, setGradeFilter] = useState<string>('all');
 
   const currentMonthObj = MONTH_LIST.find((m) => m.key === selectedMonth) || MONTH_LIST[1];
 
@@ -70,8 +71,9 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
       s.grade.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesFilter = filterStatus === 'all' || status === filterStatus;
+    const matchesGrade = gradeFilter === 'all' || s.grade.includes(gradeFilter);
 
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesFilter && matchesGrade;
   });
 
   return (
@@ -203,19 +205,40 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono-code text-slate-400">Holat:</span>
-            <select
-              aria-label="Holat bo'yicha saralash"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
-            >
-              <option value="all">Barchasi</option>
-              <option value="paid">To'langan</option>
-              <option value="pending">Kutilmoqda (To'lanmagan)</option>
-              <option value="scholarship">100% Grant</option>
-            </select>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-mono-code text-slate-400">Sinf:</span>
+              <select
+                aria-label="Sinf bo'yicha saralash"
+                value={gradeFilter}
+                onChange={(e) => setGradeFilter(e.target.value)}
+                className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
+              >
+                <option value="all">Barcha (5-11)</option>
+                <option value="5">5-sinf</option>
+                <option value="6">6-sinf</option>
+                <option value="7">7-sinf</option>
+                <option value="8">8-sinf</option>
+                <option value="9">9-sinf</option>
+                <option value="10">10-sinf</option>
+                <option value="11">11-sinf</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-mono-code text-slate-400">Holat:</span>
+              <select
+                aria-label="Holat bo'yicha saralash"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
+              >
+                <option value="all">Barchasi</option>
+                <option value="paid">To'langan</option>
+                <option value="pending">Kutilmoqda (To'lanmagan)</option>
+                <option value="scholarship">100% Grant</option>
+              </select>
+            </div>
           </div>
         </div>
 

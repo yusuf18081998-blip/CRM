@@ -135,7 +135,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
           <div className="flex items-center gap-1.5 text-xs text-slate-400">
             <span className="text-emerald-400 font-medium">{students.length} faol</span>
             <span aria-hidden="true">·</span>
-            <span>45-maktab 9-11 sinflar</span>
+            <span>45-maktab 5-11 sinflar</span>
           </div>
         </div>
 

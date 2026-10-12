@@ -18,6 +18,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     attendance[attendance.length - 1]?.date || new Date().toISOString().split('T')[0]
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newLessonNumber, setNewLessonNumber] = useState<number>(attendance.length + 1);
   const [newLessonTopic, setNewLessonTopic] = useState('');
@@ -119,13 +120,15 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
   };
 
   // Filter students
-  const filteredStudents = students.filter(
-    (s) =>
+  const filteredStudents = students.filter((s) => {
+    const matchesSearch =
       s.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.grade.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      s.grade.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGrade = gradeFilter === 'all' || s.grade.includes(gradeFilter);
+    return matchesSearch && matchesGrade;
+  });
 
   return (
     <div className="space-y-6">
@@ -219,15 +222,32 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
       {/* Search & Student Attendance Table */}
       <div className="cyber-glass rounded-xl overflow-hidden border border-slate-800">
         <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="O'quvchi ismi, logini yoki sinfi..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg pl-9 pr-4 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400"
-            />
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="O'quvchi ismi, logini yoki sinfi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg pl-9 pr-4 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400"
+              />
+            </div>
+            <select
+              aria-label="Sinf bo'yicha saralash"
+              value={gradeFilter}
+              onChange={(e) => setGradeFilter(e.target.value)}
+              className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-400 font-mono-code"
+            >
+              <option value="all">Barcha (5-11)</option>
+              <option value="5">5-sinf</option>
+              <option value="6">6-sinf</option>
+              <option value="7">7-sinf</option>
+              <option value="8">8-sinf</option>
+              <option value="9">9-sinf</option>
+              <option value="10">10-sinf</option>
+              <option value="11">11-sinf</option>
+            </select>
           </div>
 
           <div className="flex items-center gap-4 text-xs font-mono-code text-slate-400 self-end sm:self-center">
