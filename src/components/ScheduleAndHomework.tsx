@@ -15,6 +15,7 @@ interface ScheduleAndHomeworkProps {
   onAddHomework: (hw: Homework) => void;
   onSubmitHomework: (sub: StudentSubmission) => void;
   onGradeSubmission: (subId: string, score: number, feedback: string) => void;
+  onDirectGrade?: (studentId: string, homeworkId: string, score: number, feedback: string) => void;
 }
 
 export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
@@ -29,6 +30,7 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
   onAddHomework,
   onSubmitHomework,
   onGradeSubmission,
+  onDirectGrade,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'curriculum' | 'homework' | 'submissions'>('curriculum');
   const [quarterFilter, setQuarterFilter] = useState<number | 'all'>('all');
@@ -47,10 +49,17 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
   const [submittingHw, setSubmittingHw] = useState<Homework | null>(null);
   const [submitContent, setSubmitContent] = useState('');
 
-  // Grading modal
+  // Grading modal (for existing submission)
   const [gradingSub, setGradingSub] = useState<StudentSubmission | null>(null);
   const [gradeScore, setGradeScore] = useState<number>(95);
   const [gradeFeedback, setGradeFeedback] = useState('Topshiriq talablari to\'liq bajarilgan.');
+
+  // Direct grading modal (Ustoz to'g'ridan-to'g'ri o'quvchiga baho qo'yishi)
+  const [showDirectGradeModal, setShowDirectGradeModal] = useState(false);
+  const [directStudentId, setDirectStudentId] = useState(students[0]?.id || '');
+  const [directHomeworkId, setDirectHomeworkId] = useState(homework[0]?.id || '');
+  const [directScore, setDirectScore] = useState<number>(95);
+  const [directFeedback, setDirectFeedback] = useState('Darsda amaliy topshiriq a\'lo darajada bajarildi.');
 
   const handleCreateHw = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +107,16 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
 
     onGradeSubmission(gradingSub.id, gradeScore, gradeFeedback);
     setGradingSub(null);
+  };
+
+  const handleSaveDirectGrade = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directStudentId || !directHomeworkId) return;
+
+    if (onDirectGrade) {
+      onDirectGrade(directStudentId, directHomeworkId, directScore, directFeedback);
+    }
+    setShowDirectGradeModal(false);
   };
 
   // Calculate completed lessons stats
@@ -559,7 +578,21 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap font-mono-code text-[11px]">
+            <div className="flex items-center gap-3 flex-wrap">
+              {role === 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (students.length > 0) setDirectStudentId(students[0].id);
+                    if (homework.length > 0) setDirectHomeworkId(homework[0].id);
+                    setShowDirectGradeModal(true);
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(251,191,36,0.35)] transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <Award className="w-4 h-4 text-slate-950" />
+                  <span>+ O'quvchiga Baho Qo'yish</span>
+                </button>
+              )}
               <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                 🟢 86 – 100: A'lo
               </span>
@@ -665,7 +698,29 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
                 {submissions.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400">
-                      Hozircha topshirilgan vazifalar yo'q.
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <Award className="w-10 h-10 text-amber-400/50" />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-300">Hozircha topshirilgan vazifalar yo'q</p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            O'quvchilar vazifa topshirganda bu yerda ko'rinadi, yoki yuqoridagi <strong>"+ O'quvchiga Baho Qo'yish"</strong> tugmasi orqali to'g'ridan-to'g'ri baholashingiz mumkin.
+                          </p>
+                        </div>
+                        {role === 'admin' && students.length > 0 && homework.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDirectStudentId(students[0].id);
+                              setDirectHomeworkId(homework[0].id);
+                              setShowDirectGradeModal(true);
+                            }}
+                            className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer mt-1"
+                          >
+                            <Award className="w-3.5 h-3.5" />
+                            <span>Hozir Baho Qo'yish (100 ball)</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -913,6 +968,125 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
                   className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-[0_0_12px_rgba(6,182,212,0.4)] cursor-pointer"
                 >
                   Bahoni Saqlash
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Teacher Direct Grade Modal (O'quvchiga to'g'ridan-to'g'ri baho qo'yish) */}
+      {showDirectGradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="cyber-glass rounded-xl p-6 max-w-md w-full border border-amber-500/40 shadow-2xl my-auto">
+            <h3 className="text-lg font-bold text-white mb-4 pb-2 border-b border-slate-800 flex items-center gap-2">
+              <Award className="w-5 h-5 text-amber-400" />
+              <span>O'quvchiga Baho Qo'yish (100 Ball)</span>
+            </h3>
+
+            <form onSubmit={handleSaveDirectGrade} className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono-code text-slate-300 mb-1">
+                  O'quvchini Tanlang
+                </label>
+                <select
+                  aria-label="O'quvchini tanlang"
+                  value={directStudentId}
+                  onChange={(e) => setDirectStudentId(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  required
+                >
+                  {students.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.fullName} ({st.grade}) - ID: {st.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono-code text-slate-300 mb-1">
+                  Vazifa / Laboratoriya Ishi
+                </label>
+                <select
+                  aria-label="Vazifani tanlang"
+                  value={directHomeworkId}
+                  onChange={(e) => setDirectHomeworkId(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  required
+                >
+                  {homework.map((hw) => (
+                    <option key={hw.id} value={hw.id}>
+                      {hw.title} ({hw.moduleName})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-mono-code text-slate-300">
+                    Qo'yiladigan Baho (0-100 ball)
+                  </label>
+                  <span className="text-[11px] font-mono-code text-amber-400">
+                    {directScore >= 86 ? "🟢 A'lo (86-100)" : directScore >= 71 ? "🔵 Yaxshi (71-85)" : directScore >= 56 ? "🟡 Qoniqarli (56-70)" : "🔴 Qoniqarsiz (0-55)"}
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={directScore}
+                  onChange={(e) => setDirectScore(parseInt(e.target.value) || 0)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-lg font-bold font-mono-code text-amber-300 focus:outline-none focus:border-amber-400"
+                  required
+                />
+                {/* 100 ballik tizim tezkor tugmalari */}
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span className="text-[10px] text-slate-400 font-mono-code mr-1">Tezkor ball:</span>
+                  {[100, 95, 90, 85, 80, 75, 60].map((score) => (
+                    <button
+                      key={score}
+                      type="button"
+                      onClick={() => setDirectScore(score)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono-code font-bold transition-all cursor-pointer ${
+                        directScore === score
+                          ? 'bg-amber-400 text-slate-950 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                      }`}
+                    >
+                      {score}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono-code text-slate-300 mb-1">
+                  Ustoz Izohi va Xulosasi
+                </label>
+                <textarea
+                  value={directFeedback}
+                  onChange={(e) => setDirectFeedback(e.target.value)}
+                  rows={3}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowDirectGradeModal(false)}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium cursor-pointer"
+                >
+                  Bekor Qilish
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold transition-all shadow-[0_0_12px_rgba(251,191,36,0.4)] cursor-pointer"
+                >
+                  Bahoni Tasdiqlash
                 </button>
               </div>
             </form>

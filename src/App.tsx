@@ -11,7 +11,15 @@ import {
   StudentSubmission,
   ActiveTab,
   UserRole,
+  AppToast,
 } from './types';
+import { ToastContainer } from './components/ToastContainer';
+import { BellPermissionModal } from './components/BellPermissionModal';
+import {
+  playBellSound,
+  showSystemNotification,
+  registerServiceWorker,
+} from './utils/audioNotification';
 import {
   INITIAL_STUDENTS,
   INITIAL_ATTENDANCE,
@@ -94,6 +102,140 @@ export default function App() {
     students[0]?.fullName || ''
   );
 
+  // Animated Toast notifications state
+  const [toasts, setToasts] = useState<AppToast[]>([]);
+
+  // Sound and Bell permission state
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('maktab45_sound_enabled_v5');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [isBellModalOpen, setIsBellModalOpen] = useState<boolean>(false);
+
+  // Saytga kirishi bilan bildirishnoma va qo'ng'iroqqa ruxsat so'rash (2-rasmdagidek)
+  useEffect(() => {
+    // Service workerni orqa fonda xabarnoma chiqarish uchun ro'yxatdan o'tkazamiz
+    registerServiceWorker().catch(() => {});
+
+    const alreadyDecided = localStorage.getItem('maktab45_bell_permission_asked_v6');
+    if (!alreadyDecided) {
+      const timer = setTimeout(() => {
+        setIsBellModalOpen(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Boshqa ochiq tablar / oynalar o'rtasida real-vaqt sinxronlash
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
+    const channel = new BroadcastChannel('maktab45_live_sync');
+    channel.onmessage = (event) => {
+      const data = event.data;
+      if (data && data.type === 'SYNC_TOAST' && data.toast) {
+        setToasts((prev) => [data.toast, ...prev].slice(0, 5));
+        if (soundEnabled) {
+          showSystemNotification({
+            title: data.toast.title,
+            body: data.toast.message,
+            type: data.toast.type,
+            tag: data.toast.id,
+          });
+        }
+      }
+    };
+    return () => {
+      channel.close();
+    };
+  }, [soundEnabled]);
+
+  const handleAllowBell = () => {
+    setSoundEnabled(true);
+    localStorage.setItem('maktab45_sound_enabled_v5', 'true');
+    localStorage.setItem('maktab45_bell_permission_asked_v6', 'true');
+    setIsBellModalOpen(false);
+    playBellSound('success');
+    pushToast({
+      type: 'success',
+      title: "Bildirishnomalar va Qo'ng'iroq Yoqildi! 🔔",
+      message: "Saytdan tashqarida bo'lsangiz ham yangi vazifalar va baholar ekranga chiqadi.",
+      duration: 5000,
+    });
+  };
+
+  const handleDenyBell = () => {
+    setSoundEnabled(false);
+    localStorage.setItem('maktab45_sound_enabled_v5', 'false');
+    localStorage.setItem('maktab45_bell_permission_asked_v6', 'true');
+    setIsBellModalOpen(false);
+  };
+
+  const handleToggleSound = () => {
+    const nextVal = !soundEnabled;
+    setSoundEnabled(nextVal);
+    localStorage.setItem('maktab45_sound_enabled_v5', JSON.stringify(nextVal));
+    if (nextVal) {
+      playBellSound('success');
+      pushToast({
+        type: 'info',
+        title: "Qo'ng'iroq yoqildi 🔔",
+        message: "Bildirishnoma qo'ng'irog'i faollashtirildi (saytdan tashqarida ham chiqadi).",
+        duration: 3000,
+      });
+    }
+  };
+
+  const pushToast = (toast: Omit<AppToast, 'id'>, broadcast: boolean = true) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newToast: AppToast = {
+      ...toast,
+      id,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    setToasts((prev) => [newToast, ...prev].slice(0, 5)); // Keep max 5 active toasts
+
+    // Saytdan tashqarida (boshqa oynada / fonda) tursangiz ham chiqadigan tizim bildirishnomasi & qo'ng'iroq
+    if (soundEnabled) {
+      const soundType =
+        toast.type === 'grade'
+          ? 'grade'
+          : toast.type === 'homework'
+          ? 'homework'
+          : toast.type === 'success'
+          ? 'success'
+          : toast.type === 'warning'
+          ? 'warning'
+          : 'generic';
+
+      showSystemNotification({
+        title: toast.title,
+        body: toast.message,
+        type: soundType,
+        tag: id,
+      });
+    }
+
+    // Boshqa ochiq tablar / fondagi oynalarga uzatish
+    if (broadcast && typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const channel = new BroadcastChannel('maktab45_live_sync');
+        channel.postMessage({ type: 'SYNC_TOAST', toast: newToast });
+        channel.close();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const handleDismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   // Save to LocalStorage on updates
   useEffect(() => {
     try {
@@ -146,6 +288,16 @@ export default function App() {
       setActiveTab('overview');
     }
     setIsLoginModalOpen(false);
+
+    // Kirganda qo'ng'iroqqa ruxsat so'rash
+    const asked = localStorage.getItem('maktab45_bell_permission_asked_v5');
+    if (!asked) {
+      setTimeout(() => {
+        setIsBellModalOpen(true);
+      }, 400);
+    } else if (soundEnabled) {
+      playBellSound('success');
+    }
   };
 
   const handleLogout = () => {
@@ -156,6 +308,37 @@ export default function App() {
     setIsLoginModalOpen(false);
   };
 
+  // Oylik to'lov eslatmasi (Ustoz tasdiqlamaguncha davriy eslatib turadi):
+  // "bu oyni oylik to'lovin qilin deb hamayta versin qchon men tasdiqlasam to'lov qildi deb keyin to'xsin xar oyning beshinchi sanasigacha to'lanishi kerg desin"
+  useEffect(() => {
+    if (!isAuthenticated || role !== 'student' || !activeStudent) return;
+
+    const currentMonthKey = 'oktyabr';
+    const payment = activeStudent.monthlyPayments?.[currentMonthKey];
+    const isPaid = payment?.status === 'paid' || payment?.status === 'scholarship';
+
+    if (!isPaid) {
+      const sendPaymentWarning = () => {
+        pushToast({
+          type: 'warning',
+          title: "⚠️ Oylik To'lov Eslatmasi (Oktyabr oyi)",
+          message:
+            "Hurmatli o'quvchi, ushbu oyning to'lovini to'lang! To'lov har oyning 5-sanasigacha to'lanishi kerak. Ustoz tizimda tasdiqlamaguncha ushbu eslatma to'xtamaydi.",
+          duration: 9000,
+        });
+      };
+
+      // Tizimga kirganda 1.5 soniyadan so'ng va har 80 soniyada takroran eslatadi
+      const initialTimer = setTimeout(sendPaymentWarning, 1500);
+      const recurringInterval = setInterval(sendPaymentWarning, 80000);
+
+      return () => {
+        clearTimeout(initialTimer);
+        clearInterval(recurringInterval);
+      };
+    }
+  }, [isAuthenticated, role, activeStudent]);
+
   // Handlers for Students CRUD
   const handleAddStudent = (newStudent: Student) => {
     setStudents((prev) => [newStudent, ...prev]);
@@ -165,11 +348,25 @@ export default function App() {
   };
 
   const handleUpdateStudent = (updatedStudent: Student) => {
+    const prevStudent = students.find((s) => s.id === updatedStudent.id);
+    const wasPending = prevStudent?.monthlyPayments?.oktyabr?.status !== 'paid';
+    const nowPaid = updatedStudent.monthlyPayments?.oktyabr?.status === 'paid';
+
     setStudents((prev) =>
       prev.map((s) => (s.id === updatedStudent.id ? updatedStudent : s))
     );
     if (activeStudent?.id === updatedStudent.id) {
       setActiveStudent(updatedStudent);
+    }
+
+    // Ustoz to'lovni tasdiqlaganda bildirishnoma va to'xtatish xabari
+    if (wasPending && nowPaid) {
+      pushToast({
+        type: 'success',
+        title: "To'lov Tasdiqlandi! ✅",
+        message: `${updatedStudent.fullName} uchun Oktyabr oyi to'lovi qabul qilindi. Oylik to'lov eslatmasi to'xtatildi!`,
+        duration: 5000,
+      });
     }
   };
 
@@ -189,6 +386,11 @@ export default function App() {
   // Handlers for Homework & Submissions
   const handleAddHomework = (newHw: Homework) => {
     setHomework((prev) => [...prev, newHw]);
+    pushToast({
+      type: 'homework',
+      title: "Yangi Uy Vazifasi Yuklandi!",
+      message: `"${newHw.title}" — ${newHw.moduleName}. Maksimal: ${newHw.maxScore} ball.`,
+    });
   };
 
   const handleSubmitHomework = (newSub: StudentSubmission) => {
@@ -198,14 +400,80 @@ export default function App() {
       );
       return [...filtered, newSub];
     });
+
+    const targetHw = homework.find((h) => h.id === newSub.homeworkId);
+    const targetStudent = students.find((s) => s.id === newSub.studentId);
+    pushToast({
+      type: 'success',
+      title: "Vazifa Muvaffaqiyatli Topshirildi!",
+      message: `${targetStudent?.fullName || 'O\'quvchi'} tomonidan "${targetHw?.title || newSub.homeworkId}" topshirildi.`,
+    });
   };
 
   const handleGradeSubmission = (subId: string, score: number, feedback: string) => {
+    let studentName = '';
+    let hwTitle = '';
+
     setSubmissions((prev) =>
-      prev.map((s) =>
-        s.id === subId ? { ...s, score, feedback, status: 'graded' } : s
-      )
+      prev.map((s) => {
+        if (s.id === subId) {
+          const st = students.find((std) => std.id === s.studentId);
+          const hw = homework.find((h) => h.id === s.homeworkId);
+          studentName = st?.fullName || s.studentId;
+          hwTitle = hw?.title || s.homeworkId;
+          return { ...s, score, feedback, status: 'graded' };
+        }
+        return s;
+      })
     );
+
+    const gradeLevel = score >= 86 ? "A'lo" : score >= 71 ? "Yaxshi" : score >= 56 ? "Qoniqarli" : "Qoniqarsiz";
+    pushToast({
+      type: 'grade',
+      title: `Baho Qo'yildi: ${score} / 100 ball (${gradeLevel})!`,
+      message: `${studentName} uchun "${hwTitle}" baholandi. Izoh: "${feedback}"`,
+      duration: 8000,
+    });
+  };
+
+  // Ustoz to'g'ridan-to'g'ri o'quvchiga baho qo'yishi
+  const handleDirectGrade = (studentId: string, homeworkId: string, score: number, feedback: string) => {
+    const student = students.find((s) => s.id === studentId);
+    const hw = homework.find((h) => h.id === homeworkId);
+
+    const existingSubIndex = submissions.findIndex(
+      (s) => s.studentId === studentId && s.homeworkId === homeworkId
+    );
+
+    if (existingSubIndex >= 0) {
+      setSubmissions((prev) =>
+        prev.map((s, idx) =>
+          idx === existingSubIndex
+            ? { ...s, score, feedback, status: 'graded' }
+            : s
+        )
+      );
+    } else {
+      const newSub: StudentSubmission = {
+        id: `SUB-${Date.now().toString().slice(-4)}`,
+        homeworkId,
+        studentId,
+        submittedAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
+        content: "Darsda bevosita topshirilgan / Ustoz tomonidan baholangan",
+        score,
+        feedback,
+        status: 'graded',
+      };
+      setSubmissions((prev) => [...prev, newSub]);
+    }
+
+    const gradeLevel = score >= 86 ? "A'lo" : score >= 71 ? "Yaxshi" : score >= 56 ? "Qoniqarli" : "Qoniqarsiz";
+    pushToast({
+      type: 'grade',
+      title: `Yangi Baho Qo'yildi: ${score} / 100 ball (${gradeLevel})!`,
+      message: `${student?.fullName || studentId} uchun "${hw?.title || homeworkId}" baholandi. Izoh: "${feedback}"`,
+      duration: 8000,
+    });
   };
 
   // Switch to student portal for specific student
@@ -272,6 +540,9 @@ export default function App() {
         onLogout={handleLogout}
         onOpenLogin={() => setIsLoginModalOpen(true)}
         activeStudent={activeStudent}
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
+        onOpenSoundPermission={() => setIsBellModalOpen(true)}
       />
 
       {/* Agar tizimga kirmagan bo'lsa, LoginScreen ochiladi */}
@@ -359,6 +630,7 @@ export default function App() {
             onAddHomework={handleAddHomework}
             onSubmitHomework={handleSubmitHomework}
             onGradeSubmission={handleGradeSubmission}
+            onDirectGrade={handleDirectGrade}
           />
         )}
 
@@ -400,6 +672,16 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
         onClose={() => setIsLoginModalOpen(false)}
         allowClose={true}
+      />
+
+      {/* Interaktiv Animatsiyali Bildirishnomalar (Toast) */}
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+
+      {/* Qo'ng'iroq va Ovozli Bildirishnoma Ruxsat Oynasi */}
+      <BellPermissionModal
+        isOpen={isBellModalOpen}
+        onAllow={handleAllowBell}
+        onDeny={handleDenyBell}
       />
 
       {/* Cyber OS Minimal Footer */}

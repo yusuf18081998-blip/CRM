@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050713" />
+      <stop offset="50%" stop-color="#0a1226" />
+      <stop offset="100%" stop-color="#030712" />
+    </linearGradient>
+
+    <!-- Neon Cyan Border Gradient -->
+    <linearGradient id="neonCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+
+    <!-- Gold Accent Gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <!-- Glowing Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect x="12" y="12" width="488" height="488" rx="100" fill="none" stroke="url(#neonCyan)" stroke-width="8" opacity="0.9" />
+
+  <!-- Inner Cyber Circuit Grid lines -->
+  <path d="M40 180 h 60 l 40 40 v 60" stroke="#06b6d4" stroke-width="4" stroke-dasharray="6 6" fill="none" opacity="0.3" />
+  <path d="M472 180 h -60 l -40 40 v 60" stroke="#06b6d4" stroke-width="4" stroke-dasharray="6 6" fill="none" opacity="0.3" />
+  <path d="M180 472 v -60 l 40 -40 h 60" stroke="#3b82f6" stroke-width="4" stroke-dasharray="6 6" fill="none" opacity="0.3" />
+  <circle cx="140" cy="280" r="6" fill="#00f2fe" opacity="0.8" />
+  <circle cx="372" cy="280" r="6" fill="#00f2fe" opacity="0.8" />
+
+  <!-- Central Cyber Hexagon / Shield -->
+  <polygon points="256,64 416,156 416,356 256,448 96,356 96,156" fill="#060c1c" stroke="url(#neonCyan)" stroke-width="6" />
+
+  <!-- Shield Inner Layer -->
+  <polygon points="256,84 396,168 396,344 256,428 116,344 116,168" fill="#09152e" opacity="0.7" />
+
+  <!-- "45" Inscribed in Bold Futuristic Typography -->
+  <g filter="url(#glow)">
+    <!-- Number '4' -->
+    <path d="M228 170 v 110 h 26 v 34 h -26 v 44 h -34 v -44 h -56 v -28 l 54 -116 h 36 z M168 280 h 26 v -62 l -26 62 z" fill="#00f2fe" />
+    
+    <!-- Number '5' -->
+    <path d="M276 170 h 84 v 32 h -54 v 40 c 8 -6 18 -10 32 -10 c 32 0 54 22 54 62 c 0 42 -24 66 -62 66 c -28 0 -48 -14 -56 -36 l 30 -14 c 4 12 14 18 26 18 c 16 0 28 -12 28 -34 c 0 -20 -12 -32 -28 -32 c -14 0 -24 8 -28 18 h -26 v -124 z" fill="#38bdf8" />
+  </g>
+
+  <!-- AI OS Sub-Badge Banner -->
+  <rect x="176" y="380" width="160" height="38" rx="10" fill="#050814" stroke="#00f2fe" stroke-width="3" />
+  <text x="256" y="405" font-family="'Orbitron', -apple-system, sans-serif" font-size="20" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="3">AI OS</text>
+
+  <!-- Top Maktab Crest Stars / Sparks -->
+  <circle cx="256" cy="116" r="7" fill="#fbbf24" />
+  <circle cx="224" cy="126" r="4.5" fill="#38bdf8" />
+  <circle cx="288" cy="126" r="4.5" fill="#38bdf8" />
+</svg>

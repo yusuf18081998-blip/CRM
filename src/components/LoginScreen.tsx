@@ -11,7 +11,9 @@ import {
   Sparkles,
   Shield,
   GraduationCap,
+  Bell,
 } from 'lucide-react';
+import { SchoolLogo } from './SchoolLogo';
 
 interface LoginScreenProps {
   students: Student[];
@@ -77,7 +79,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   return (
     <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-16">
       {/* Yuqori sarlavha va belgi */}
-      <div className="text-center mb-6 sm:mb-8 max-w-lg mx-auto">
+      <div className="text-center mb-6 sm:mb-8 max-w-lg mx-auto flex flex-col items-center">
+        <div className="mb-3 p-3 rounded-2xl bg-cyan-950/70 border border-cyan-400/50 shadow-[0_0_30px_rgba(6,182,212,0.4)]">
+          <SchoolLogo size="lg" />
+        </div>
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs font-mono-code mb-4 shadow-[0_0_15px_rgba(6,182,212,0.25)]">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>45-MAKTAB · 5-11 SINFLAR SUN'IY INTELLEKT KURSI</span>
@@ -169,15 +174,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         </form>
 
         {/* Tizim haqida ixcham ma'lumot */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-center gap-4 text-[11px] text-slate-400 font-mono-code">
-          <div className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-emerald-400" />
-            <span>O'qituvchi paneli</span>
+        <div className="mt-6 pt-4 border-t border-slate-800/80 flex flex-col items-center gap-2.5 text-[11px] text-slate-400 font-mono-code">
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-emerald-400" />
+              <span>O'qituvchi paneli</span>
+            </div>
+            <span className="text-slate-600">·</span>
+            <div className="flex items-center gap-1.5">
+              <GraduationCap className="w-3.5 h-3.5 text-cyan-400" />
+              <span>O'quvchi kabineti</span>
+            </div>
           </div>
-          <span className="text-slate-600">·</span>
-          <div className="flex items-center gap-1.5">
-            <GraduationCap className="w-3.5 h-3.5 text-cyan-400" />
-            <span>O'quvchi kabineti</span>
+          <div className="flex items-center gap-1.5 text-amber-400/90 text-[10px]">
+            <Bell className="w-3 h-3 text-amber-400 animate-bounce" />
+            <span>Yangi vazifalar & baholarda audio qo'ng'iroq yangraydi</span>
           </div>
         </div>
       </div>

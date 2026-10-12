@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ActiveTab, UserRole, Student } from '../types';
-import { ShieldCheck, Cpu, Clock, LogOut, Key, User, DollarSign } from 'lucide-react';
+import { ShieldCheck, Cpu, Clock, LogOut, Key, User, DollarSign, Bell, Volume2, VolumeX } from 'lucide-react';
+import { SchoolLogo } from './SchoolLogo';
 
 interface TopNavProps {
   activeTab: ActiveTab;
@@ -10,6 +11,9 @@ interface TopNavProps {
   onLogout: () => void;
   onOpenLogin: () => void;
   activeStudent: Student | null;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
+  onOpenSoundPermission?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -20,6 +24,9 @@ export const TopNav: React.FC<TopNavProps> = ({
   onLogout,
   onOpenLogin,
   activeStudent,
+  soundEnabled = true,
+  onToggleSound,
+  onOpenSoundPermission,
 }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
 
@@ -46,8 +53,8 @@ export const TopNav: React.FC<TopNavProps> = ({
         
         {/* Zone 1: Wordmark */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.25)]">
-            <Cpu className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center p-1 shadow-[0_0_15px_rgba(6,182,212,0.35)]">
+            <SchoolLogo size="sm" />
           </div>
           <button
             onClick={() => setActiveTab(role === 'admin' ? 'overview' : 'portal')}
@@ -163,8 +170,32 @@ export const TopNav: React.FC<TopNavProps> = ({
           </nav>
         )}
 
-        {/* Zone 3: HUD Clock, User badge & Prominent Chiqish Button */}
+        {/* Zone 3: HUD Clock, Bell sound control, User badge & Prominent Chiqish Button */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Bell & Sound Control Button */}
+          <button
+            type="button"
+            onClick={onOpenSoundPermission || onToggleSound}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono-code transition-all cursor-pointer ${
+              soundEnabled
+                ? 'bg-amber-950/40 border-amber-500/50 text-amber-300 hover:bg-amber-900/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:text-slate-200'
+            }`}
+            title={soundEnabled ? "Qo'ng'iroq va audio bildirishnomalar yoqilgan (Sinash / O'zgartirish)" : "Qo'ng'iroq o'chirilgan - Yoqish"}
+          >
+            {soundEnabled ? (
+              <>
+                <Bell className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <span className="hidden sm:inline font-bold text-[11px]">Qo'ng'iroq: Yoqiq</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                <span className="hidden sm:inline text-[11px]">Qo'ng'iroq: O'chiq</span>
+              </>
+            )}
+          </button>
+
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900/80 border border-slate-700/60 text-xs font-mono-code text-cyan-300">
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
             <span>{currentTime || '12:00:00'}</span>

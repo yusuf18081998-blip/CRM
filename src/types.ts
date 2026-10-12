@@ -93,4 +93,11 @@ export const MONTH_LIST: { key: PaymentMonthKey; name: string }[] = [
   { key: 'mart', name: 'Mart' },
   { key: 'aprel', name: 'Aprel' },
   { key: 'may', name: 'May' },
-];
+];export interface AppToast {
+  id: string;
+  type: 'success' | 'info' | 'warning' | 'grade' | 'homework';
+  title: string;
+  message: string;
+  timestamp?: string;
+  duration?: number;
+}

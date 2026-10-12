@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Student, AttendanceRecord, Homework, StudentSubmission, ActiveTab, MONTH_LIST } from '../types';
-import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle, LogOut } from 'lucide-react';
+import { Student, AttendanceRecord, Homework, StudentSubmission, ActiveTab, MONTH_LIST, PaymentMonthKey } from '../types';
+import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle, LogOut, Volume2 } from 'lucide-react';
+import { playBellSound } from '../utils/audioNotification';
 
 interface StudentPortalProps {
   student: Student | null;
@@ -111,6 +112,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
     setSubmissionUrl('');
   };
 
+  // Current month payment status
+  const currentMonthKey: PaymentMonthKey = 'oktyabr';
+  const currentMonthPayment = student.monthlyPayments?.[currentMonthKey];
+  const isCurrentMonthPaid = currentMonthPayment?.status === 'paid';
+  const isCurrentMonthScholarship = currentMonthPayment?.status === 'scholarship';
+  const isPaymentPending = !isCurrentMonthPaid && !isCurrentMonthScholarship;
+
   return (
     <div className="space-y-6">
       {/* Student Banner */}
@@ -171,6 +179,71 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* OYIK TO'LOV ESLATMASI (Ustoz tasdiqlaguncha to'xtamaydi) */}
+      {isPaymentPending ? (
+        <div className="p-4 sm:p-5 rounded-2xl border-2 border-rose-500/80 bg-gradient-to-r from-rose-950/90 via-slate-950/95 to-amber-950/90 text-white shadow-[0_0_35px_rgba(244,63,94,0.35)] relative overflow-hidden animate-pulse">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-rose-500/20 border-2 border-rose-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg">
+                <AlertTriangle className="w-6 h-6 text-rose-400 animate-bounce" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono-code font-extrabold uppercase bg-rose-600 text-white shadow-sm">
+                    MUHIM ESLATMA
+                  </span>
+                  <span className="text-xs text-amber-300 font-bold font-mono-code">
+                    📅 HAR OYNING 5-SANASIGACHA TO'LANISHI SHART!
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-orbitron font-extrabold text-white">
+                  Bu Oyning Oylik To'lovini Qiling (Oktyabr oyi)
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed max-w-2xl">
+                  Hurmatli <strong>{student.fullName}</strong>, ushbu oy uchun to&apos;lovni amalga oshiring. To&apos;lov har oyning 5-sanasigacha to&apos;lanishi kerak. 
+                  <span className="text-amber-300 font-semibold block sm:inline sm:ml-1">
+                    Ustoz tizimda to&apos;lov qabul qilinganini tasdiqlamaguncha ushbu eslatma ko&apos;rinib turadi!
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-rose-500/30 gap-2 shrink-0">
+              <div className="text-left sm:text-right">
+                <div className="text-[11px] font-mono-code text-rose-400 font-bold">
+                  Holat: Kutilmoqda
+                </div>
+                <div className="text-xl font-mono-code font-black text-white">
+                  100 000 UZS
+                </div>
+              </div>
+              <span className="px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/50 text-rose-300 text-xs font-mono-code font-bold">
+                Ustoz tasdiqlashi shart
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : isCurrentMonthPaid ? (
+        <div className="p-3.5 sm:p-4 rounded-xl border border-emerald-500/50 bg-gradient-to-r from-emerald-950/70 to-slate-950/90 text-white flex items-center justify-between gap-3 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-bold text-emerald-300">
+                ✅ Oktyabr oyi to&apos;lovi to&apos;liq to&apos;langan va tasdiqlangan
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Ustoz tomonidan to&apos;lov qabul qilingan. To&apos;lov eslatmalari to&apos;xtatildi. Rahmat!
+              </div>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-mono-code font-bold border border-emerald-500/40 shrink-0">
+            Tasdiqlandi ✅
+          </span>
+        </div>
+      ) : null}
 
       {/* 4 Performance Indicators */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -236,6 +309,54 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* So'nggi Baholangan Topshiriqlar va Bildirishnomalar Bloki */}
+      {gradedSubs.length > 0 && (
+        <div className="p-4 rounded-xl cyber-glass border border-amber-500/30 bg-gradient-to-r from-amber-950/20 via-slate-900/60 to-cyan-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 shrink-0">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 text-xs font-mono-code text-amber-400">
+                <span>⭐ SO'NGGI BAHOLANGAN TOPSHIRIQ</span>
+                <span className="text-slate-400">·</span>
+                <span>{gradedSubs[gradedSubs.length - 1].submittedAt}</span>
+              </div>
+              <p className="text-sm font-bold text-white mt-0.5">
+                {homework.find((h) => h.id === gradedSubs[gradedSubs.length - 1].homeworkId)?.title || "AI Amaliy Topshiriq"}
+              </p>
+              {gradedSubs[gradedSubs.length - 1].feedback && (
+                <p className="text-xs text-slate-300 italic mt-0.5">
+                  Ustoz izohi: "{gradedSubs[gradedSubs.length - 1].feedback}"
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-right">
+              <div className="text-2xl font-extrabold font-mono-code text-amber-300">
+                {gradedSubs[gradedSubs.length - 1].score} / 100
+              </div>
+              <div className="text-[10px] font-mono-code text-slate-400">
+                {(gradedSubs[gradedSubs.length - 1].score ?? 0) >= 86 ? "A'lo daraja" : (gradedSubs[gradedSubs.length - 1].score ?? 0) >= 71 ? "Yaxshi" : "Qoniqarli"}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                playBellSound('grade');
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-mono-code font-bold transition-all cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+              title="Baho qo'ng'irog'i ohangini eshitish"
+            >
+              <Volume2 className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">Qo'ng'iroq ohangi</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Monthly Payments Overview Strip */}
       <div className="cyber-glass rounded-xl p-6 border border-slate-800 space-y-4">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Student, PaymentMonthKey, MONTH_LIST } from '../types';
-import { CreditCard, CheckCircle2, AlertTriangle, Award, Calendar, Search, DollarSign, Check, X } from 'lucide-react';
+import { CreditCard, CheckCircle2, AlertTriangle, Award, Calendar, Search, DollarSign, Check, X, Bell } from 'lucide-react';
+import { playBellSound, showSystemNotification } from '../utils/audioNotification';
 
 interface MonthlyPaymentsManagerProps {
   students: Student[];
@@ -15,6 +16,18 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [gradeFilter, setGradeFilter] = useState<string>('all');
+  const [reminderSent, setReminderSent] = useState(false);
+
+  const handleSendPaymentReminder = () => {
+    playBellSound('warning');
+    showSystemNotification({
+      title: `⚠️ ${currentMonthObj.name} Oyi To'lov Eslatmasi!`,
+      body: `Barcha to'lamagan o'quvchilarga eslatma yuborildi: To'lov har oyning 5-sanasigacha to'lanishi shart! Ustoz tasdiqlagach eslatma to'xtaydi.`,
+      type: 'warning',
+    });
+    setReminderSent(true);
+    setTimeout(() => setReminderSent(false), 5000);
+  };
 
   const currentMonthObj = MONTH_LIST.find((m) => m.key === selectedMonth) || MONTH_LIST[1];
 
@@ -95,9 +108,29 @@ export const MonthlyPaymentsManager: React.FC<MonthlyPaymentsManagerProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 font-mono-code text-xs text-emerald-300">
-          <DollarSign className="w-4 h-4 text-emerald-400" />
-          <span>Kurs narxi: <strong>100 000 UZS / oy</strong></span>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-950/40 border border-emerald-500/40 font-mono-code text-xs text-emerald-300">
+            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <span>Kurs narxi: <strong>100 000 UZS / oy</strong></span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSendPaymentReminder}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-mono-code text-xs font-bold transition-all cursor-pointer shadow-lg ${
+              reminderSent
+                ? 'bg-emerald-500 text-slate-950 border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)]'
+                : 'bg-rose-600 hover:bg-rose-500 text-white border border-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.4)]'
+            }`}
+            title="Har oyning 5-sanasigacha to'lash shartligi haqida eslatma yuborish"
+          >
+            <Bell className="w-3.5 h-3.5 animate-bounce" />
+            <span>
+              {reminderSent
+                ? "✅ Eslatma Yuborildi!"
+                : "🔔 To'lov Eslatmasi Yuborish (5-sanasigacha)"}
+            </span>
+          </button>
         </div>
       </div>
 
