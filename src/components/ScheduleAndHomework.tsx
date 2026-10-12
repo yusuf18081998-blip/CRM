@@ -544,11 +544,40 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
       </div>
     )}
 
-      {/* Subtab 3: Submissions */}
+      {/* Subtab 3: Submissions & 100-Ball Baholash Tizimi */}
       {activeSubTab === 'submissions' && (
-        <div className="cyber-glass rounded-xl overflow-hidden border border-slate-800">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+        <div className="space-y-4">
+          {/* 100 Ballik Baholash Tizimi Qo'llanmasi & Ko'rsatmasi */}
+          <div className="cyber-glass-card rounded-xl p-4 border border-amber-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gradient-to-r from-amber-950/20 to-slate-900/60">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-mono-code text-amber-400">
+                <Award className="w-4 h-4 text-amber-400" />
+                <span className="font-bold">100 BALLIK BAHOLASH TIZIMI (USTOZ UCHUN YO'RIQNOMA)</span>
+              </div>
+              <p className="text-xs text-slate-300">
+                O'quvchilar topshirgan amaliy ishlar jadvaldagi <strong>"Baholash"</strong> tugmasi orqali tekshiriladi va 100 ballgacha baholanadi.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap font-mono-code text-[11px]">
+              <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                🟢 86 – 100: A'lo
+              </span>
+              <span className="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                🔵 71 – 85: Yaxshi
+              </span>
+              <span className="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                🟡 56 – 70: Qoniqarli
+              </span>
+              <span className="px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                🔴 0 – 55: Qayta topshirish
+              </span>
+            </div>
+          </div>
+
+          <div className="cyber-glass rounded-xl overflow-hidden border border-slate-800">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
               <thead className="bg-slate-900/90 text-slate-400 uppercase font-mono-code border-b border-slate-800">
                 <tr>
                   <th className="py-3 px-4">O'quvchi</th>
@@ -644,6 +673,7 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
             </table>
           </div>
         </div>
+      </div>
       )}
 
       {/* Add Homework Modal */}
@@ -820,18 +850,41 @@ export const ScheduleAndHomework: React.FC<ScheduleAndHomeworkProps> = ({
 
             <form onSubmit={handleSaveGrade} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono-code text-slate-300 mb-1">
-                  Baho (Maksimal 100 ball)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-mono-code text-slate-300">
+                    Baho (100 ballik tizimda)
+                  </label>
+                  <span className="text-[11px] font-mono-code text-cyan-400">
+                    {gradeScore >= 86 ? "🟢 A'lo (86-100)" : gradeScore >= 71 ? "🔵 Yaxshi (71-85)" : gradeScore >= 56 ? "🟡 Qoniqarli (56-70)" : "🔴 Qoniqarsiz (0-55)"}
+                  </span>
+                </div>
                 <input
                   type="number"
                   min={0}
                   max={100}
                   value={gradeScore}
                   onChange={(e) => setGradeScore(parseInt(e.target.value) || 0)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-lg font-bold font-mono-code text-amber-300 focus:outline-none focus:border-cyan-400"
                   required
                 />
+                {/* 100 ballik tizim tezkor tugmalari */}
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span className="text-[10px] text-slate-400 font-mono-code mr-1">Tezkor ball:</span>
+                  {[100, 95, 90, 85, 80, 75, 60].map((score) => (
+                    <button
+                      key={score}
+                      type="button"
+                      onClick={() => setGradeScore(score)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono-code font-bold transition-all cursor-pointer ${
+                        gradeScore === score
+                          ? 'bg-amber-400 text-slate-950 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                      }`}
+                    >
+                      {score}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
