@@ -118,42 +118,45 @@ export const CURRICULUM_72_LESSONS: CurriculumLesson[] = [
   { number: 72, week: 36, dayOfWeek: 'Chorshanba', topic: "4-CHORAK AMALIY NAZORAT ISHI — YILLIK LOYIHA HIMOYASI", quarter: 4, isExam: true },
 ];
 
-// Standart Namunaviy O'quvchilar Bazasi (Yangi qurilmalar va telefonlarda xatoliksiz ishlashi uchun)
+// Standart Namunaviy O'quvchilar Bazasi (Foydalanuvchining haqiqiy o'quvchilari)
 export const SAMPLE_DEFAULT_STUDENTS: Student[] = [
   {
     id: 'AI-45-01',
-    fullName: "Jasur To'xtayev",
-    username: 'jasur_toxtayev',
-    password: 'jasur2013',
+    fullName: "Qodirova Muhayyo",
+    username: 'qodirova_muhayyo',
+    password: 'muhayyo2013',
     grade: '8-A sinf',
     phone: '+998 90 123 45 67',
-    telegramUsername: '@jasur_ai',
+    telegramUsername: '@qodirova_muhayyo',
     enrolledDate: '2026-09-02',
-    notes: "Sun'iy intellekt kursi faol o'quvchisi",
+    avatarSeed: 'Muhayyo',
+    notes: "Sun'iy intellekt kursi o'quvchisi",
     monthlyPayments: createInitialMonthlyPayments(false, 'oktyabr'),
   },
   {
-    id: 'AI-45-02',
-    fullName: "Malika Karimova",
-    username: 'malika_karimova',
-    password: 'malika2013',
+    id: 'AI-45-03',
+    fullName: "Abduvaliyev Bunyodjon",
+    username: 'abduvaliyev_bunyodjon',
+    password: 'bunyod2013',
     grade: '9-B sinf',
-    phone: '+998 91 234 56 78',
-    telegramUsername: '@malika_k',
+    phone: '+998 93 345 67 89',
+    telegramUsername: '@abduvaliyev_bunyodjon',
     enrolledDate: '2026-09-02',
-    notes: "Generativ dizayn va prompt mutaxassisi",
+    avatarSeed: 'Bunyodjon',
+    notes: "Python va AI modellar yo'nalishi",
     monthlyPayments: createInitialMonthlyPayments(true),
   },
   {
-    id: 'AI-45-03',
-    fullName: "Bobur Mirzayev",
-    username: 'bobur_mirzayev',
-    password: 'bobur2013',
+    id: 'AI-45-04',
+    fullName: "Shukurov Muhammadsolih",
+    username: 'shukurov_muhammadsolih',
+    password: 'solih2013',
     grade: '10-A sinf',
-    phone: '+998 93 345 67 89',
-    telegramUsername: '@bobur_ai',
+    phone: '+998 94 567 89 01',
+    telegramUsername: '@shukurov_muhammadsolih',
     enrolledDate: '2026-09-02',
-    notes: "Python va AI bot yo'nalishi",
+    avatarSeed: 'Muhammadsolih',
+    notes: "Prompt injiniring va generativ modellar",
     monthlyPayments: createInitialMonthlyPayments(false),
   },
 ];
@@ -161,8 +164,73 @@ export const SAMPLE_DEFAULT_STUDENTS: Student[] = [
 // O'QUVCHILAR BAZASI
 export const INITIAL_STUDENTS: Student[] = SAMPLE_DEFAULT_STUDENTS;
 
-// DAVOMAT JURNALI
-export const INITIAL_ATTENDANCE: AttendanceRecord[] = [];
+// DAVOMAT JURNALI (Har bir mavzu uchun alohida ochilgan davomat betlari)
+export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
+  {
+    date: '2026-09-02',
+    lessonNumber: 1,
+    lessonTopic: "Sun'iy intellekt nima? AI ning kundalik hayotdagi o'rni",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+  },
+  {
+    date: '2026-09-07',
+    lessonNumber: 2,
+    lessonTopic: "AI turlari: tor AI, generativ AI va kelajak AI tushunchasi",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+  },
+  {
+    date: '2026-09-09',
+    lessonNumber: 3,
+    lessonTopic: "ChatGPT bilan xavfsiz va samarali ishlash asoslari",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+  },
+  {
+    date: '2026-09-14',
+    lessonNumber: 4,
+    lessonTopic: "Prompt anatomiyasi: rol, vazifa, kontekst va natija formati",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+  },
+  {
+    date: '2026-09-16',
+    lessonNumber: 5,
+    lessonTopic: "Aniq topshiriq berish: noaniq va kuchli promptlar",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'excused', 'AI-45-04': 'present' },
+    notes: { 'AI-45-03': "Informatika olimpiadasida qatnashgani sababli" },
+  },
+  {
+    date: '2026-09-21',
+    lessonNumber: 6,
+    lessonTopic: "Kontekst berish va AI javobining sifatini oshirish",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+  },
+  {
+    date: '2026-09-23',
+    lessonNumber: 7,
+    lessonTopic: "Promptlarda cheklovlar va talablarni belgilash",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+  },
+  {
+    date: '2026-09-28',
+    lessonNumber: 8,
+    lessonTopic: "Zero-shot va few-shot prompting tushunchalari",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+  },
+  {
+    date: '2026-09-30',
+    lessonNumber: 9,
+    lessonTopic: "Chain-of-thought o'rniga bosqichma-bosqich vazifa dizayni",
+    quarter: 1,
+    records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+  },
+];
 
 // UY VAZIFALARI
 export const INITIAL_HOMEWORK: Homework[] = [
@@ -170,17 +238,21 @@ export const INITIAL_HOMEWORK: Homework[] = [
     id: 'HW-01',
     lessonNumber: 8,
     title: "Zero-shot va Few-shot Prompting Taqqoslash",
+    moduleName: "Prompt Muhandisligi Asoslari",
     description: "ChatGPT va Claude yordamida bitta murakkab vazifani avval noaniq, keyin few-shot uslubida berib, javoblarni tahlil qiling.",
-    deadline: "2026-10-18",
-    createdAt: "2026-10-10",
+    dueDate: "2026-10-18",
+    maxScore: 100,
+    difficulty: "O'rta",
   },
   {
     id: 'HW-02',
     lessonNumber: 9,
     title: "Bosqichma-bosqich Vazifa Dizayni (Chain-of-thought)",
+    moduleName: "Mantiqiy AI Modellari",
     description: "Sun'iy intellektga mantiqiy masalani bosqichlarga bo'lib yechish bo'yicha prompt tuzing va natijani havola ko'rinishida yuboring.",
-    deadline: "2026-10-22",
-    createdAt: "2026-10-12",
+    dueDate: "2026-10-22",
+    maxScore: 100,
+    difficulty: "Murakkab",
   },
 ];
 
@@ -191,10 +263,9 @@ export const INITIAL_SUBMISSIONS: StudentSubmission[] = [
     homeworkId: 'HW-01',
     studentId: 'AI-45-01',
     submittedAt: '2026-10-11 14:20',
-    content: 'https://chatgpt.com/share/prompt-analiz-jasur',
+    content: 'https://chatgpt.com/share/prompt-analiz-muhayyo',
     status: 'graded',
     score: 95,
     feedback: "A'lo darajada bajarilgan! Few-shot namunalari juda aniq tanlangan.",
-    gradedAt: '2026-10-11 16:00',
   },
 ];

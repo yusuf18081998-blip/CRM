@@ -173,28 +173,27 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           </button>
         </form>
 
-        {/* Tizim haqida ixcham ma'lumot */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80 flex flex-col items-center gap-2.5 text-[11px] text-slate-400 font-mono-code">
+        {/* Xavfsizlik eslatmasi */}
+        <div className="mt-5 pt-3 border-t border-slate-800/80 flex flex-col items-center gap-2 text-[11px] text-slate-400 font-mono-code">
           <div className="flex items-center justify-center gap-4">
             <div className="flex items-center gap-1.5">
               <Shield className="w-3.5 h-3.5 text-emerald-400" />
-              <span>O'qituvchi paneli</span>
+              <span>Himoyalangan tizim</span>
             </div>
             <span className="text-slate-600">·</span>
             <div className="flex items-center gap-1.5">
               <GraduationCap className="w-3.5 h-3.5 text-cyan-400" />
-              <span>O'quvchi kabineti</span>
+              <span>Faqat shaxsiy login & parol</span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-amber-400/90 text-[10px]">
-            <Bell className="w-3 h-3 text-amber-400 animate-bounce" />
-            <span>Yangi vazifalar & baholarda audio qo'ng'iroq yangraydi</span>
+          <div className="text-slate-500 text-[10px] text-center">
+            Har bir o'quvchi faqat o'ziga berilgan maxfiy login va parol orqali kirishi mumkin.
           </div>
         </div>
       </div>
 
       {/* Cyber OS pastki ma'lumot */}
-      <div className="mt-8 text-center text-xs text-slate-500 font-mono-code flex items-center gap-2">
+      <div className="mt-6 text-center text-xs text-slate-500 font-mono-code flex items-center gap-2">
         <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
         <span>45-MAKTAB · SUN'IY INTELLEKT LABORATORIYASI (72 SOAT)</span>
       </div>

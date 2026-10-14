@@ -472,8 +472,13 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                     <div className="font-semibold text-slate-200">
                       {rec.lessonNumber}-dars: {rec.lessonTopic}
                     </div>
-                    <div className="text-slate-400 font-mono-code text-[11px] mt-0.5">
-                      Sana: {rec.date}
+                    <div className="text-slate-400 font-mono-code text-[11px] mt-0.5 flex items-center gap-2">
+                      <span>Sana: {rec.date}</span>
+                      {rec.notes?.[student.id] && (
+                        <span className="text-amber-300 bg-amber-950/40 px-1.5 py-0.2 rounded border border-amber-500/30">
+                          Izoh: {rec.notes[student.id]}
+                        </span>
+                      )}
                     </div>
                   </div>
 

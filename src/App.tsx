@@ -36,13 +36,35 @@ import { CertificateGenerator } from './components/CertificateGenerator';
 import { LoginModal } from './components/LoginModal';
 import { LoginScreen } from './components/LoginScreen';
 import { MonthlyPaymentsManager } from './components/MonthlyPaymentsManager';
+import { parseSyncUrl } from './utils/cloudSync';
 
 export default function App() {
-  // State with LocalStorage Persistence (v4_clean)
+  // State with LocalStorage Persistence (v4_clean) va URL orqali telefonlarga sinxronlash
   const [students, setStudents] = useState<Student[]>(() => {
+    // 1. Agar o'qituvchi yuborgan havola orqali (#sync=...) kirilgan bo'lsa
+    const syncedStudents = parseSyncUrl();
+    if (syncedStudents && syncedStudents.length > 0) {
+      try {
+        localStorage.setItem('maktab45_ai_students_clean_v4', JSON.stringify(syncedStudents));
+      } catch (e) {
+        console.error('Failed to cache synced students', e);
+      }
+      return syncedStudents;
+    }
+
     try {
       const saved = localStorage.getItem('maktab45_ai_students_clean_v4');
-      return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const hasOldDummy = parsed.some((s: any) => s.fullName === "Jasur To'xtayev" || s.username === 'jasur_toxtayev');
+          if (!hasOldDummy) {
+            return parsed;
+          }
+        }
+      }
+      localStorage.setItem('maktab45_ai_students_clean_v4', JSON.stringify(INITIAL_STUDENTS));
+      return INITIAL_STUDENTS;
     } catch {
       return INITIAL_STUDENTS;
     }
@@ -51,7 +73,17 @@ export default function App() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(() => {
     try {
       const saved = localStorage.getItem('maktab45_ai_attendance_clean_v4');
-      return saved ? JSON.parse(saved) : INITIAL_ATTENDANCE;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const hasRealStudentId = parsed.some((rec: any) => rec.records && (rec.records['AI-45-04'] !== undefined || rec.records['AI-45-03'] !== undefined));
+          if (hasRealStudentId) {
+            return parsed;
+          }
+        }
+      }
+      localStorage.setItem('maktab45_ai_attendance_clean_v4', JSON.stringify(INITIAL_ATTENDANCE));
+      return INITIAL_ATTENDANCE;
     } catch {
       return INITIAL_ATTENDANCE;
     }
@@ -112,18 +144,9 @@ export default function App() {
 
   const [isBellModalOpen, setIsBellModalOpen] = useState<boolean>(false);
 
-  // Saytga kirishi bilan bildirishnoma va qo'ng'iroqqa ruxsat so'rash (2-rasmdagidek)
+  // Sayt yuklanganda service workerni orqa fonda xabarnoma chiqarish uchun ro'yxatdan o'tkazamiz
   useEffect(() => {
-    // Service workerni orqa fonda xabarnoma chiqarish uchun ro'yxatdan o'tkazamiz
     registerServiceWorker().catch(() => {});
-
-    const alreadyDecided = localStorage.getItem('maktab45_bell_permission_asked_v6');
-    if (!alreadyDecided) {
-      const timer = setTimeout(() => {
-        setIsBellModalOpen(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
   }, []);
 
   // Boshqa ochiq tablar / oynalar o'rtasida real-vaqt sinxronlash (faqat Chrome bildirishnomasi chiqariladi)
@@ -284,12 +307,12 @@ export default function App() {
     }
     setIsLoginModalOpen(false);
 
-    // Kirganda qo'ng'iroqqa ruxsat so'rash
-    const asked = localStorage.getItem('maktab45_bell_permission_asked_v5');
+    // Kirganda qo'ng'iroqqa ruxsat so'rash (faqat bir marta)
+    const asked = localStorage.getItem('maktab45_bell_permission_asked_v6');
     if (!asked) {
       setTimeout(() => {
         setIsBellModalOpen(true);
-      }, 400);
+      }, 600);
     } else if (soundEnabled) {
       playBellSound('success');
     }

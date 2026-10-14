@@ -3,6 +3,7 @@ import { Student, AttendanceRecord, StudentSubmission } from '../types';
 import { UserPlus, Search, Edit2, Trash2, Award, UserCheck, Phone, Send, CheckCircle2, AlertTriangle, Key, Copy, Check, Eye, EyeOff, Sparkles, RefreshCw, Camera, Upload } from 'lucide-react';
 import { generateUniqueUsername, generateUniquePassword } from '../utils/studentCredentials';
 import { compressImageFile } from '../utils/imageCompressor';
+import { generateSyncUrl, exportDatabaseFile } from '../utils/cloudSync';
 
 interface StudentsManagerProps {
   students: Student[];
@@ -36,6 +37,7 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [visiblePasswordId, setVisiblePasswordId] = useState<string | null>(null);
+  const [isSyncCopied, setIsSyncCopied] = useState<boolean>(false);
 
   // Form states for new student
   const [fullName, setFullName] = useState('');
@@ -189,17 +191,48 @@ export const StudentsManager: React.FC<StudentsManagerProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            resetForm();
-            setPassword(`ai45_${Math.floor(1000 + Math.random() * 9000)}`);
-            setIsAddModalOpen(true);
-          }}
-          className="px-4 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(6,182,212,0.35)] cursor-pointer shrink-0"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Yangi O'quvchi & Login Qo'shish</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Telegram / Telefonlarga sinxronlash havolasi */}
+          <button
+            type="button"
+            onClick={() => {
+              const url = generateSyncUrl(students);
+              navigator.clipboard.writeText(url);
+              setIsSyncCopied(true);
+              setTimeout(() => setIsSyncCopied(false), 3000);
+            }}
+            className="px-3.5 py-2.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 border border-emerald-400 text-white font-bold text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer shrink-0"
+            title="Ushbu havolani Telegram guruhga yoki o'quvchilar telefoniga yuboring: barcha o'quvchilar va ularning loginlari telefonida avtomatik ochiladi"
+          >
+            {isSyncCopied ? <Check className="w-4 h-4 text-emerald-200" /> : <Send className="w-4 h-4 text-emerald-200" />}
+            <span>{isSyncCopied ? "Havola Nusxalandi! ✅" : "O'quvchilarga Havola (Sinxronlash) 📲"}</span>
+          </button>
+
+          {/* Baza zaxira nusxasi (Backup) */}
+          <button
+            type="button"
+            onClick={() => {
+              exportDatabaseFile(students, attendance, [], submissions);
+            }}
+            className="px-3 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+            title="Barcha o'quvchilar va davomat bazasini fayl sifatida yuklab olish"
+          >
+            <Upload className="w-3.5 h-3.5 rotate-180 text-cyan-400" />
+            <span>Bazani Yuklab Olish</span>
+          </button>
+
+          <button
+            onClick={() => {
+              resetForm();
+              setPassword(`ai45_${Math.floor(1000 + Math.random() * 9000)}`);
+              setIsAddModalOpen(true);
+            }}
+            className="px-4 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(6,182,212,0.35)] cursor-pointer shrink-0"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Yangi O'quvchi & Login Qo'shish</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}

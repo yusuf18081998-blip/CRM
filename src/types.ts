@@ -40,6 +40,8 @@ export interface AttendanceRecord {
   lessonNumber: number;
   lessonTopic: string;
   records: Record<string, AttendanceStatus>; // studentId -> status
+  notes?: Record<string, string>; // studentId -> izoh / sabab (masalan: "Betob", "Olimpiadada")
+  quarter?: number;
 }
 
 export interface Homework {
