@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Student, AttendanceRecord, Homework, StudentSubmission, ActiveTab, MONTH_LIST, PaymentMonthKey } from '../types';
-import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle, LogOut, Volume2, Camera } from 'lucide-react';
+import { User, CheckCircle2, Award, BookOpen, Send, ExternalLink, Calendar, ChevronRight, Key, Eye, EyeOff, DollarSign, AlertTriangle, LogOut, Volume2, Camera, Star } from 'lucide-react';
 import { playBellSound } from '../utils/audioNotification';
 import { AvatarUploadModal } from './AvatarUploadModal';
 
@@ -462,35 +462,53 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
           <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
             {attendance.map((rec) => {
               const status = rec.records[student.id] || 'present';
+              const grade = rec.grades?.[student.id];
+              const comment = rec.gradeComments?.[student.id];
 
               return (
                 <div
                   key={rec.date}
-                  className="p-3 rounded-lg bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3 text-xs"
+                  className="p-3 rounded-lg bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                 >
-                  <div>
+                  <div className="space-y-1">
                     <div className="font-semibold text-slate-200">
                       {rec.lessonNumber}-dars: {rec.lessonTopic}
                     </div>
-                    <div className="text-slate-400 font-mono-code text-[11px] mt-0.5 flex items-center gap-2">
+                    <div className="text-slate-400 font-mono-code text-[11px] flex flex-wrap items-center gap-2">
                       <span>Sana: {rec.date}</span>
                       {rec.notes?.[student.id] && (
                         <span className="text-amber-300 bg-amber-950/40 px-1.5 py-0.2 rounded border border-amber-500/30">
-                          Izoh: {rec.notes[student.id]}
+                          Davomat izohi: {rec.notes[student.id]}
+                        </span>
+                      )}
+                      {comment && (
+                        <span className="text-emerald-300 bg-emerald-950/40 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                          Ustoz izohi: "{comment}"
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <span className={`px-2.5 py-1 rounded text-xs font-mono-code font-bold shrink-0 ${
-                    status === 'present'
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                      : status === 'excused'
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                      : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                  }`}>
-                    {status === 'present' ? 'Keldi' : status === 'excused' ? 'Sababli' : 'Kelmadi'}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    {grade ? (
+                      <span className="px-2.5 py-1 rounded bg-amber-400/20 text-amber-300 border border-amber-400/50 text-xs font-bold font-mono-code flex items-center gap-1 shadow-[0_0_8px_rgba(251,191,36,0.25)]">
+                        <Star className="w-3.5 h-3.5 fill-current text-amber-400" />
+                        <span>{grade} baho</span>
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 text-[10px] font-mono-code">Baholanmagan</span>
+                    )}
+
+                    <span className={`px-2.5 py-1 rounded text-xs font-mono-code font-bold ${
+                      status === 'present'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                        : status === 'excused'
+                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                        : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                    }`}>
+                      {status === 'present' ? 'Keldi' : status === 'excused' ? 'Sababli' : 'Kelmadi'}
+                    </span>
+                  </div>
                 </div>
               );
             })}

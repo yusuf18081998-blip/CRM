@@ -20,6 +20,12 @@ import {
   Sparkles,
   ArrowRight,
   Edit3,
+  Star,
+  Award,
+  MessageSquare,
+  RotateCcw,
+  Sliders,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface AttendanceTrackerProps {
@@ -34,7 +40,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
   onUpdateAttendance,
 }) => {
   // Navigation / View modes
-  const [activeView, setActiveView] = useState<'sheet' | 'catalog' | 'matrix'>('sheet');
+  const [activeView, setActiveView] = useState<'sheet' | 'grading' | 'catalog' | 'matrix'>('sheet');
 
   // Currently selected lesson number (Default to latest opened lesson or lesson 1)
   const initialLessonNum = attendance.length > 0
@@ -48,11 +54,18 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
   const [studentSearch, setStudentSearch] = useState('');
   const [gradeFilter, setGradeFilter] = useState('all');
 
+  // Matrix view toggle: 'attendance' or 'grades'
+  const [matrixMode, setMatrixMode] = useState<'attendance' | 'grades'>('attendance');
+
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [editingNoteStudentId, setEditingNoteStudentId] = useState<string | null>(null);
   const [noteInput, setNoteInput] = useState('');
+
+  // Comment input per student for grading
+  const [editingCommentStudentId, setEditingCommentStudentId] = useState<string | null>(null);
+  const [commentInput, setCommentInput] = useState('');
 
   // Form for custom or new lesson modal
   const [formLessonNum, setFormLessonNum] = useState<number>(attendance.length + 1);
@@ -64,13 +77,15 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
   const curriculumLesson = CURRICULUM_72_LESSONS.find((l) => l.number === selectedLessonNum);
 
   // Open / create an attendance sheet for a specific lesson
-  const handleOpenSheetForLesson = (lessonNum: number) => {
+  const handleOpenSheetForLesson = (lessonNum: number, viewTarget: 'sheet' | 'grading' = 'sheet') => {
     const existing = attendance.find((a) => a.lessonNumber === lessonNum);
     if (!existing) {
       const curLesson = CURRICULUM_72_LESSONS.find((l) => l.number === lessonNum);
       const defaultRecords: Record<string, AttendanceStatus> = {};
+      const defaultGrades: Record<string, number> = {};
       students.forEach((s) => {
         defaultRecords[s.id] = 'present';
+        defaultGrades[s.id] = 5; // Default 5 baho
       });
 
       const newRec: AttendanceRecord = {
@@ -79,16 +94,18 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
         date: new Date().toISOString().split('T')[0],
         quarter: curLesson?.quarter || 1,
         records: defaultRecords,
+        grades: defaultGrades,
+        gradeComments: {},
       };
 
       const updated = [...attendance, newRec].sort((a, b) => a.lessonNumber - b.lessonNumber);
       onUpdateAttendance(updated);
     }
     setSelectedLessonNum(lessonNum);
-    setActiveView('sheet');
+    setActiveView(viewTarget);
   };
 
-  // Toggle or set student status in the active sheet
+  // Set student attendance status
   const handleSetStudentStatus = (studentId: string, status: AttendanceStatus) => {
     if (!activeRecord) return;
 
@@ -106,6 +123,55 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     });
 
     onUpdateAttendance(updated);
+  };
+
+  // Set student daily grade (5, 4, 3, 2 or custom points)
+  const handleSetStudentGrade = (studentId: string, grade: number) => {
+    if (!activeRecord) return;
+
+    const updated = attendance.map((rec) => {
+      if (rec.lessonNumber === selectedLessonNum) {
+        const currentGrades = { ...(rec.grades || {}) };
+        // If clicked on the same grade again, toggle it off (or keep)
+        if (currentGrades[studentId] === grade) {
+          delete currentGrades[studentId];
+        } else {
+          currentGrades[studentId] = grade;
+        }
+        return {
+          ...rec,
+          grades: currentGrades,
+        };
+      }
+      return rec;
+    });
+
+    onUpdateAttendance(updated);
+  };
+
+  // Set student daily grade comment
+  const handleSaveGradeComment = (studentId: string, comment: string) => {
+    if (!activeRecord) return;
+
+    const updated = attendance.map((rec) => {
+      if (rec.lessonNumber === selectedLessonNum) {
+        const currentComments = { ...(rec.gradeComments || {}) };
+        if (comment.trim()) {
+          currentComments[studentId] = comment.trim();
+        } else {
+          delete currentComments[studentId];
+        }
+        return {
+          ...rec,
+          gradeComments: currentComments,
+        };
+      }
+      return rec;
+    });
+
+    onUpdateAttendance(updated);
+    setEditingCommentStudentId(null);
+    setCommentInput('');
   };
 
   // Mark all students present in the active sheet
@@ -129,6 +195,45 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     onUpdateAttendance(updated);
   };
 
+  // Set bulk grade for all students for this lesson
+  const handleSetBulkGrade = (grade: number) => {
+    if (!activeRecord) return;
+
+    const updated = attendance.map((rec) => {
+      if (rec.lessonNumber === selectedLessonNum) {
+        const newGrades: Record<string, number> = {};
+        students.forEach((s) => {
+          newGrades[s.id] = grade;
+        });
+        return {
+          ...rec,
+          grades: newGrades,
+        };
+      }
+      return rec;
+    });
+
+    onUpdateAttendance(updated);
+  };
+
+  // Clear all grades for this lesson
+  const handleClearAllGrades = () => {
+    if (!activeRecord) return;
+    if (window.confirm("Ushbu darsdagi barcha o'quvchilar baholarini tozalamoqchimisiz?")) {
+      const updated = attendance.map((rec) => {
+        if (rec.lessonNumber === selectedLessonNum) {
+          return {
+            ...rec,
+            grades: {},
+            gradeComments: {},
+          };
+        }
+        return rec;
+      });
+      onUpdateAttendance(updated);
+    }
+  };
+
   // Update date of the active sheet
   const handleUpdateSheetDate = (newDate: string) => {
     if (!activeRecord) return;
@@ -141,7 +246,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     onUpdateAttendance(updated);
   };
 
-  // Save reason note for a student
+  // Save reason note for attendance
   const handleSaveStudentNote = (studentId: string) => {
     if (!activeRecord) return;
     const updated = attendance.map((rec) => {
@@ -161,10 +266,10 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     setNoteInput('');
   };
 
-  // Delete active lesson attendance sheet
+  // Delete active lesson sheet
   const handleDeleteActiveSheet = () => {
     if (!activeRecord) return;
-    if (window.confirm(`Haqiqatan ham ${activeRecord.lessonNumber}-dars davomat betini o'chirmoqchimisiz?`)) {
+    if (window.confirm(`Haqiqatan ham ${activeRecord.lessonNumber}-dars davomat va baholash betini o'chirmoqchimisiz?`)) {
       const updated = attendance.filter((a) => a.lessonNumber !== selectedLessonNum);
       onUpdateAttendance(updated);
       if (updated.length > 0) {
@@ -179,8 +284,10 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     if (!formLessonTopic.trim()) return;
 
     const defaultRecords: Record<string, AttendanceStatus> = {};
+    const defaultGrades: Record<string, number> = {};
     students.forEach((s) => {
       defaultRecords[s.id] = 'present';
+      defaultGrades[s.id] = 5;
     });
 
     const curLesson = CURRICULUM_72_LESSONS.find((l) => l.number === formLessonNum);
@@ -191,9 +298,9 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
       date: formLessonDate,
       quarter: curLesson?.quarter || 1,
       records: defaultRecords,
+      grades: defaultGrades,
     };
 
-    // Replace if exists, or append
     const exists = attendance.some((a) => a.lessonNumber === formLessonNum);
     let updated: AttendanceRecord[];
     if (exists) {
@@ -208,7 +315,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     setActiveView('sheet');
   };
 
-  // Calculate stats for current active sheet
+  // Calculate attendance stats for current active sheet
   let activePresent = 0;
   let activeAbsent = 0;
   let activeExcused = 0;
@@ -223,6 +330,30 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
   const activeTotal = students.length;
   const activeRate = activeTotal > 0 ? Math.round((activePresent / activeTotal) * 100) : 100;
 
+  // Calculate grading stats for current active sheet
+  let activeGradedCount = 0;
+  let activeGradeSum = 0;
+  let count5 = 0;
+  let count4 = 0;
+  let count3 = 0;
+  let count2 = 0;
+
+  if (activeRecord?.grades) {
+    Object.values(activeRecord.grades).forEach((g) => {
+      if (typeof g === 'number' && g > 0) {
+        activeGradedCount++;
+        activeGradeSum += g;
+        if (g === 5 || g >= 86) count5++;
+        else if (g === 4 || g >= 71) count4++;
+        else if (g === 3 || g >= 56) count3++;
+        else count2++;
+      }
+    });
+  }
+  const activeAvgGrade = activeGradedCount > 0
+    ? (activeGradeSum / activeGradedCount).toFixed(1)
+    : '0.0';
+
   // Filter students for the active sheet table
   const filteredStudents = students.filter((s) => {
     const matchesSearch =
@@ -233,7 +364,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     return matchesSearch && matchesGrade;
   });
 
-  // Calculate cumulative student stats across all opened lessons
+  // Calculate cumulative student attendance stats
   const getStudentCumulativeStats = (studentId: string) => {
     let p = 0;
     let total = 0;
@@ -243,6 +374,20 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
     });
     const percent = total > 0 ? Math.round((p / total) * 100) : 100;
     return { present: p, total, percent };
+  };
+
+  // Calculate cumulative student daily grades average
+  const getStudentAverageGrade = (studentId: string) => {
+    let sum = 0;
+    let count = 0;
+    attendance.forEach((rec) => {
+      const g = rec.grades?.[studentId];
+      if (typeof g === 'number' && g > 0) {
+        sum += g;
+        count++;
+      }
+    });
+    return count > 0 ? (sum / count).toFixed(1) : '-';
   };
 
   // Filtered curriculum lessons for Catalog view
@@ -262,24 +407,25 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
         <div>
           <div className="flex items-center gap-2 text-xs font-mono-code text-cyan-400 mb-1">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span>MAVZULAR BO'YICHA DAVOMAT TIZIMI</span>
+            <span>KUNLIK DAVOMAT VA KUNLIK BAHOLASH TIZIMI</span>
             <span aria-hidden="true">·</span>
             <span>72 TA MAVZUDAN {attendance.length} TASI OCHILGAN</span>
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <span>Darslar Davomat Jurnali</span>
+            <span>Darslar Davomati & Kunlik Baholash</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/30 font-normal">
-              Har bir mavzuga alohida betlik
+              Har bir kunga alohida baho
             </span>
           </h1>
           <p className="text-sm text-slate-300 mt-0.5">
-            Har bir dars mavzusi uchun alohida davomat varag'i (sheet), o'quvchilar ishtiroki va rasmiy hisobotlar.
+            Har bir dars kuni uchun alohida ishtirokni belgilash, o'quvchilarga <strong>kunlik dars baholari</strong> (5, 4, 3, 2 yoki ball) qo'yish va izoh yozish.
           </p>
         </div>
 
         {/* View Switcher & Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center p-1 rounded-lg bg-slate-900 border border-slate-800">
+            {/* Davomat Beti */}
             <button
               onClick={() => setActiveView('sheet')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -289,9 +435,23 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>Alohida Mavzu Beti</span>
+              <span>Davomat Beti</span>
             </button>
 
+            {/* Kunlik Baholash Bo'limi (User explicit request) */}
+            <button
+              onClick={() => setActiveView('grading')}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeView === 'grading'
+                  ? 'bg-amber-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(251,191,36,0.5)]'
+                  : 'text-amber-400/90 hover:text-amber-300'
+              }`}
+            >
+              <Star className="w-3.5 h-3.5 fill-current" />
+              <span>Kunlik Baholash ⭐</span>
+            </button>
+
+            {/* Mavzular Katalogi */}
             <button
               onClick={() => setActiveView('catalog')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -301,9 +461,10 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Mavzular Katalogi (72)</span>
+              <span>Mavzular (72)</span>
             </button>
 
+            {/* Yig'ma Jurnal */}
             <button
               onClick={() => setActiveView('matrix')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -332,55 +493,86 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
         </div>
       </div>
 
-      {/* VIEW 1: DEDICATED TOPIC ATTENDANCE SHEET */}
-      {activeView === 'sheet' && (
-        <div className="space-y-5">
-          {/* Topic Selector Ribbon */}
-          <div className="cyber-glass-card rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border border-slate-800">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
-              <span className="text-xs font-mono-code text-slate-400 shrink-0 uppercase tracking-wider">
-                Mavzuni Tanlang:
-              </span>
-              <select
-                aria-label="Dars mavzusini tanlash"
-                value={selectedLessonNum}
-                onChange={(e) => setSelectedLessonNum(parseInt(e.target.value))}
-                className="bg-slate-900 border border-cyan-500/40 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono-code max-w-xs sm:max-w-md truncate"
+      {/* TOPIC SELECTOR RIBBON (Active in sheet & grading views) */}
+      {(activeView === 'sheet' || activeView === 'grading') && (
+        <div className="cyber-glass-card rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border border-slate-800">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+            <span className="text-xs font-mono-code text-slate-400 shrink-0 uppercase tracking-wider">
+              Dars Kunini Tanlang:
+            </span>
+            <select
+              aria-label="Dars mavzusini tanlash"
+              value={selectedLessonNum}
+              onChange={(e) => setSelectedLessonNum(parseInt(e.target.value))}
+              className="bg-slate-900 border border-cyan-500/40 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono-code max-w-xs sm:max-w-md truncate"
+            >
+              {CURRICULUM_72_LESSONS.map((l) => {
+                const rec = attendance.find((a) => a.lessonNumber === l.number);
+                const hasGrades = rec?.grades && Object.keys(rec.grades).length > 0;
+                return (
+                  <option key={l.number} value={l.number}>
+                    {rec ? '✓ ' : '○ '} {l.number}-dars: {l.topic} {hasGrades ? '⭐' : ''} ({l.quarter}-chorak)
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {/* Quick Sub-tab Toggle inside the Sheet: Davomat vs Kunlik Baholash */}
+          <div className="flex items-center gap-2 self-start md:self-center">
+            <div className="flex items-center p-0.5 rounded-lg bg-slate-950 border border-slate-800">
+              <button
+                onClick={() => setActiveView('sheet')}
+                className={`px-3 py-1 rounded text-xs font-medium flex items-center gap-1 cursor-pointer transition-all ${
+                  activeView === 'sheet'
+                    ? 'bg-cyan-500 text-slate-950 font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                {CURRICULUM_72_LESSONS.map((l) => {
-                  const isOpened = attendance.some((a) => a.lessonNumber === l.number);
-                  return (
-                    <option key={l.number} value={l.number}>
-                      {isOpened ? '✓ ' : '○ '} {l.number}-dars: {l.topic} ({l.quarter}-chorak)
-                    </option>
-                  );
-                })}
-              </select>
+                <FileText className="w-3 h-3" />
+                <span>Davomat (Ishtirok)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveView('grading')}
+                className={`px-3 py-1 rounded text-xs font-medium flex items-center gap-1 cursor-pointer transition-all ${
+                  activeView === 'grading'
+                    ? 'bg-amber-400 text-slate-950 font-bold shadow-[0_0_10px_rgba(251,191,36,0.5)]'
+                    : 'text-amber-400/90 hover:text-amber-300'
+                }`}
+              >
+                <Star className="w-3 h-3 fill-current" />
+                <span>Kunlik Baholash</span>
+              </button>
             </div>
 
-            {/* Previous & Next lesson buttons */}
-            <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+            {/* Prev / Next buttons */}
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 disabled={selectedLessonNum <= 1}
                 onClick={() => setSelectedLessonNum((prev) => Math.max(1, prev - 1))}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 text-xs flex items-center gap-1 cursor-pointer"
+                className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 text-xs cursor-pointer"
+                title="Oldingi dars"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
-                <span>Oldingi mavzu</span>
               </button>
 
               <button
                 disabled={selectedLessonNum >= 72}
                 onClick={() => setSelectedLessonNum((prev) => Math.min(72, prev + 1))}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 text-xs flex items-center gap-1 cursor-pointer"
+                className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 text-xs cursor-pointer"
+                title="Keyingi dars"
               >
-                <span>Keyingi mavzu</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* If sheet for this lesson exists, show the full sheet */}
+      {/* VIEW 1: DEDICATED ATTENDANCE SHEET */}
+      {activeView === 'sheet' && (
+        <div className="space-y-5">
           {activeRecord ? (
             <div className="cyber-glass rounded-xl border border-cyan-500/30 overflow-hidden shadow-2xl">
               {/* Sheet Official Header */}
@@ -395,7 +587,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                         {curriculumLesson ? `${curriculumLesson.quarter}-CHORAK · ${curriculumLesson.week}-HAFTA (${curriculumLesson.dayOfWeek})` : 'MAKTAB DASTURI'}
                       </span>
                       <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-mono-code">
-                        ✓ Bet Faol & Saqlangan
+                        ✓ Davomat Beti Faol
                       </span>
                     </div>
 
@@ -419,11 +611,19 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                   {/* Sheet Top Actions */}
                   <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                     <button
+                      onClick={() => setActiveView('grading')}
+                      className="px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(251,191,36,0.4)] cursor-pointer"
+                    >
+                      <Star className="w-4 h-4 fill-current" />
+                      <span>Ushbu Kunga Baho Qo'yish</span>
+                    </button>
+
+                    <button
                       onClick={handleMarkAllPresentInSheet}
                       className="px-3.5 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <CheckCheck className="w-4 h-4" />
-                      <span>Barchaga 'Keldi' Qo'yish</span>
+                      <span>Barchaga 'Keldi'</span>
                     </button>
 
                     <button
@@ -431,7 +631,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                       className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <Printer className="w-4 h-4 text-cyan-400" />
-                      <span>Davomat Betini Chop Etish</span>
+                      <span>Chop Etish</span>
                     </button>
 
                     <button
@@ -473,44 +673,6 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                 </div>
               </div>
 
-              {/* Sheet Search & Controls */}
-              <div className="p-4 bg-slate-950/40 border-b border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 flex-1 max-w-md">
-                  <div className="relative flex-1">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      placeholder="O'quvchi ismi, login yoki ID bo'yicha..."
-                      value={studentSearch}
-                      onChange={(e) => setStudentSearch(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-                    />
-                  </div>
-                  <select
-                    aria-label="Sinf tanlash"
-                    value={gradeFilter}
-                    onChange={(e) => setGradeFilter(e.target.value)}
-                    className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-400 font-mono-code"
-                  >
-                    <option value="all">Barcha sinflar</option>
-                    <option value="5">5-sinf</option>
-                    <option value="6">6-sinf</option>
-                    <option value="7">7-sinf</option>
-                    <option value="8">8-sinf</option>
-                    <option value="9">9-sinf</option>
-                    <option value="10">10-sinf</option>
-                    <option value="11">11-sinf</option>
-                  </select>
-                </div>
-
-                <div className="text-xs font-mono-code text-slate-400 flex items-center gap-3">
-                  <span>Belgilash uchun tugmani bosing:</span>
-                  <div className="flex items-center gap-1 text-emerald-400"><span className="w-2 h-2 rounded bg-emerald-400 inline-block" /> Keldi</div>
-                  <div className="flex items-center gap-1 text-rose-400"><span className="w-2 h-2 rounded bg-rose-400 inline-block" /> Kelmadi</div>
-                  <div className="flex items-center gap-1 text-amber-400"><span className="w-2 h-2 rounded bg-amber-400 inline-block" /> Sababli</div>
-                </div>
-              </div>
-
               {/* Student Attendance Sheet Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
@@ -520,7 +682,8 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                       <th className="py-3 px-4">O'quvchi</th>
                       <th className="py-3 px-3">Sinfi</th>
                       <th className="py-3 px-4 text-center">Ushbu Darsdagi Davomati</th>
-                      <th className="py-3 px-4">Sabab / Izoh</th>
+                      <th className="py-3 px-4">Davomat Sababi / Izoh</th>
+                      <th className="py-3 px-4 text-center">Bugungi Bahosi</th>
                       <th className="py-3 px-4 text-right">Umumiy Davomat %</th>
                     </tr>
                   </thead>
@@ -528,6 +691,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                     {filteredStudents.map((student, idx) => {
                       const status: AttendanceStatus = activeRecord.records[student.id] || 'present';
                       const note = activeRecord.notes?.[student.id];
+                      const grade = activeRecord.grades?.[student.id];
                       const cumStats = getStudentCumulativeStats(student.id);
 
                       return (
@@ -652,6 +816,27 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                             )}
                           </td>
 
+                          {/* Today's Grade preview with link to grading view */}
+                          <td className="py-3 px-4 text-center">
+                            {grade ? (
+                              <button
+                                onClick={() => setActiveView('grading')}
+                                className="px-2.5 py-1 rounded bg-amber-400/20 border border-amber-400/50 text-amber-300 font-bold font-mono-code text-xs inline-flex items-center gap-1 hover:bg-amber-400/30 cursor-pointer"
+                                title="Baholash bo'limiga o'tish"
+                              >
+                                <Star className="w-3 h-3 fill-current text-amber-400" />
+                                <span>{grade} baho</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setActiveView('grading')}
+                                className="text-slate-500 hover:text-amber-300 text-[11px] font-mono-code underline cursor-pointer"
+                              >
+                                + Baho qo'yish
+                              </button>
+                            )}
+                          </td>
+
                           {/* Cumulative attendance % */}
                           <td className="py-3 px-4 text-right whitespace-nowrap font-mono-code">
                             <span className={`font-bold ${
@@ -670,14 +855,6 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                         </tr>
                       );
                     })}
-
-                    {filteredStudents.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="py-8 text-center text-slate-400">
-                          O'quvchilar topilmadi.
-                        </td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
@@ -689,12 +866,10 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
               </div>
             </div>
           ) : (
-            /* If no sheet opened yet for this selected lesson number, show the CTA card to open it */
             <div className="cyber-glass rounded-xl p-8 border border-dashed border-cyan-500/40 text-center space-y-4">
               <div className="w-14 h-14 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center mx-auto text-cyan-400">
                 <BookOpen className="w-7 h-7" />
               </div>
-
               <div className="max-w-lg mx-auto space-y-2">
                 <div className="text-xs font-mono-code text-cyan-400 uppercase">
                   {selectedLessonNum}-DARS ({curriculumLesson?.quarter || 1}-CHORAK)
@@ -703,26 +878,368 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                   {curriculumLesson?.topic || `${selectedLessonNum}-dars mavzusi`}
                 </h3>
                 <p className="text-sm text-slate-400">
-                  Ushbu mavzu uchun hali davomat betligi ochilmagan. Tugmani bosish orqali ushbu dars uchun alohida davomat varag'ini ochishingiz mumkin.
+                  Ushbu dars uchun hali davomat betligi ochilmagan.
                 </p>
               </div>
-
-              <div>
-                <button
-                  onClick={() => handleOpenSheetForLesson(selectedLessonNum)}
-                  className="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm inline-flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.45)] transition-all cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Ushbu Mavzuning Davomat Betini Ochish</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => handleOpenSheetForLesson(selectedLessonNum, 'sheet')}
+                className="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm inline-flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.45)] transition-all cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Ushbu Mavzuning Davomat Betini Ochish</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>
       )}
 
-      {/* VIEW 2: ALL 72 TOPICS CATALOG & SHEET STATUS */}
+      {/* VIEW 2: DEDICATED DAILY LESSON GRADING (BAHOLASH BO'LIMI) */}
+      {activeView === 'grading' && (
+        <div className="space-y-5">
+          {activeRecord ? (
+            <div className="cyber-glass rounded-xl border border-amber-500/40 overflow-hidden shadow-2xl">
+              {/* Grading Official Header */}
+              <div className="p-6 bg-gradient-to-r from-slate-900/95 via-amber-950/20 to-slate-900/95 border-b border-amber-500/30">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-md bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-mono-code font-bold flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 fill-current" />
+                        <span>KUNLIK BAHOLASH · {activeRecord.lessonNumber}-DARS</span>
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-xs font-mono-code">
+                        Sana: {activeRecord.date}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-xs font-mono-code">
+                        {curriculumLesson ? `${curriculumLesson.quarter}-chorak (${curriculumLesson.dayOfWeek})` : ''}
+                      </span>
+                    </div>
+
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                      <span>{activeRecord.lessonTopic}</span>
+                    </h2>
+                    <p className="text-xs text-amber-300/80 font-mono-code">
+                      Har bir o'quvchining bugungi darsdagi faolligi, amaliy mashg'ulotdagi ishtiroki va o'zlashtirishini baholang.
+                    </p>
+                  </div>
+
+                  {/* Bulk grade actions */}
+                  <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <button
+                      onClick={() => handleSetBulkGrade(5)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      <span>Hammaga 5 (A'lo)</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleSetBulkGrade(4)}
+                      className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 text-cyan-300 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      <span>Hammaga 4 (Yaxshi)</span>
+                    </button>
+
+                    <button
+                      onClick={handleClearAllGrades}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 border border-slate-700 text-slate-400 hover:text-rose-400 text-xs transition-colors cursor-pointer"
+                      title="Bugungi baholarni tozalash"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Grading KPI stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-5 pt-4 border-t border-slate-800/80">
+                  <div className="p-3 rounded-lg bg-slate-950/70 border border-slate-800">
+                    <div className="text-[10px] font-mono-code text-slate-400 uppercase">Baholangan</div>
+                    <div className="text-lg font-bold font-mono-code text-white mt-0.5">
+                      {activeGradedCount} / {students.length}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-amber-950/30 border border-amber-500/40">
+                    <div className="text-[10px] font-mono-code text-amber-400 uppercase">O'rtacha Baho</div>
+                    <div className="text-xl font-bold font-mono-code text-amber-300 mt-0.5 flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-current text-amber-400" />
+                      <span>{activeAvgGrade}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-emerald-950/30 border border-emerald-500/30">
+                    <div className="text-[10px] font-mono-code text-emerald-400 uppercase">5 Baho (A'lo)</div>
+                    <div className="text-lg font-bold font-mono-code text-emerald-300 mt-0.5">{count5} ta</div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-cyan-950/30 border border-cyan-500/30">
+                    <div className="text-[10px] font-mono-code text-cyan-400 uppercase">4 Baho (Yaxshi)</div>
+                    <div className="text-lg font-bold font-mono-code text-cyan-300 mt-0.5">{count4} ta</div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-yellow-950/30 border border-yellow-500/30">
+                    <div className="text-[10px] font-mono-code text-yellow-400 uppercase">3 (Qoniqarli)</div>
+                    <div className="text-lg font-bold font-mono-code text-yellow-300 mt-0.5">{count3} ta</div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-rose-950/30 border border-rose-500/30">
+                    <div className="text-[10px] font-mono-code text-rose-400 uppercase">2 (Qoniqarsiz)</div>
+                    <div className="text-lg font-bold font-mono-code text-rose-300 mt-0.5">{count2} ta</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Student Grading Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900/95 text-slate-400 uppercase font-mono-code border-b border-slate-800">
+                    <tr>
+                      <th className="py-3 px-4 w-12 text-center">#</th>
+                      <th className="py-3 px-4">O'quvchi</th>
+                      <th className="py-3 px-3">Sinfi</th>
+                      <th className="py-3 px-3 text-center">Davomati</th>
+                      <th className="py-3 px-4 text-center">Dars Bahosini Tanlang (1-klikda)</th>
+                      <th className="py-3 px-4">Ustoz Izohi / Darsdagi Faollik</th>
+                      <th className="py-3 px-4 text-right">O'rtacha Bahosi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {filteredStudents.map((student, idx) => {
+                      const status: AttendanceStatus = activeRecord.records[student.id] || 'present';
+                      const grade = activeRecord.grades?.[student.id];
+                      const comment = activeRecord.gradeComments?.[student.id];
+                      const avgGrade = getStudentAverageGrade(student.id);
+
+                      return (
+                        <tr key={student.id} className="hover:bg-slate-900/50 transition-colors">
+                          <td className="py-3 px-4 text-center font-mono-code text-slate-500">
+                            {idx + 1}
+                          </td>
+
+                          {/* Student Info */}
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-cyan-950 border border-cyan-500/30 flex items-center justify-center font-mono-code font-bold text-cyan-300 text-xs overflow-hidden shrink-0">
+                                {student.avatarUrl ? (
+                                  <img src={student.avatarUrl} alt={student.fullName} className="w-full h-full object-cover" />
+                                ) : (
+                                  student.fullName.charAt(0)
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-white">{student.fullName}</div>
+                                <div className="text-[11px] font-mono-code text-slate-400">
+                                  {student.id} · @{student.username}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Grade */}
+                          <td className="py-3 px-3 text-slate-300 font-mono-code whitespace-nowrap">
+                            {student.grade}
+                          </td>
+
+                          {/* Attendance Status */}
+                          <td className="py-3 px-3 text-center whitespace-nowrap">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono-code font-bold ${
+                                status === 'present'
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                  : status === 'absent'
+                                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                              }`}
+                            >
+                              {status === 'present' ? '✓ Kelgan' : status === 'absent' ? '✕ Kelmagan' : '⚠ Sababli'}
+                            </span>
+                          </td>
+
+                          {/* Quick Grade Buttons: 5, 4, 3, 2 */}
+                          <td className="py-3 px-4 text-center whitespace-nowrap">
+                            <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800">
+                              {/* 5 Baho - A'lo */}
+                              <button
+                                onClick={() => handleSetStudentGrade(student.id, 5)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                                  grade === 5
+                                    ? 'bg-emerald-500 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.6)] scale-105'
+                                    : 'text-slate-400 hover:text-emerald-400 hover:bg-emerald-950/40'
+                                }`}
+                                title="5 baho (A'lo)"
+                              >
+                                <Star className={`w-3.5 h-3.5 ${grade === 5 ? 'fill-current' : ''}`} />
+                                <span>5 (A'lo)</span>
+                              </button>
+
+                              {/* 4 Baho - Yaxshi */}
+                              <button
+                                onClick={() => handleSetStudentGrade(student.id, 4)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                                  grade === 4
+                                    ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.6)] scale-105'
+                                    : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-950/40'
+                                }`}
+                                title="4 baho (Yaxshi)"
+                              >
+                                <Star className={`w-3.5 h-3.5 ${grade === 4 ? 'fill-current' : ''}`} />
+                                <span>4 (Yaxshi)</span>
+                              </button>
+
+                              {/* 3 Baho - Qoniqarli */}
+                              <button
+                                onClick={() => handleSetStudentGrade(student.id, 3)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                                  grade === 3
+                                    ? 'bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(251,191,36,0.6)] scale-105'
+                                    : 'text-slate-400 hover:text-amber-400 hover:bg-amber-950/40'
+                                }`}
+                                title="3 baho (Qoniqarli)"
+                              >
+                                <Star className={`w-3.5 h-3.5 ${grade === 3 ? 'fill-current' : ''}`} />
+                                <span>3 (Qoniqarli)</span>
+                              </button>
+
+                              {/* 2 Baho - Qoniqarsiz */}
+                              <button
+                                onClick={() => handleSetStudentGrade(student.id, 2)}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                                  grade === 2
+                                    ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] scale-105'
+                                    : 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/40'
+                                }`}
+                                title="2 baho (Qoniqarsiz)"
+                              >
+                                <span>2</span>
+                              </button>
+                            </div>
+                          </td>
+
+                          {/* Teacher's Daily Comment / Feedback */}
+                          <td className="py-3 px-4">
+                            {editingCommentStudentId === student.id ? (
+                              <div className="space-y-1.5">
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="text"
+                                    placeholder="Izoh yozing (masalan: Faol qatnashdi)..."
+                                    value={commentInput}
+                                    onChange={(e) => setCommentInput(e.target.value)}
+                                    className="bg-slate-900 border border-amber-400 rounded px-2.5 py-1 text-xs text-white focus:outline-none w-56"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() => handleSaveGradeComment(student.id, commentInput)}
+                                    className="px-2.5 py-1 rounded bg-amber-400 text-slate-950 font-bold text-xs cursor-pointer"
+                                  >
+                                    Saqlash
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingCommentStudentId(null)}
+                                    className="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs cursor-pointer"
+                                  >
+                                    Bekor
+                                  </button>
+                                </div>
+
+                                {/* Quick feedback chips */}
+                                <div className="flex flex-wrap gap-1">
+                                  {[
+                                    "Faol qatnashdi",
+                                    "Amaliy ishni a'lo bajardi",
+                                    "Mustaqil prompt yozdi",
+                                    "Mavzuni to'liq tushundi",
+                                  ].map((chip) => (
+                                    <button
+                                      key={chip}
+                                      type="button"
+                                      onClick={() => setCommentInput(chip)}
+                                      className="text-[10px] bg-slate-800 hover:bg-amber-400/20 text-slate-300 hover:text-amber-300 px-1.5 py-0.5 rounded border border-slate-700 cursor-pointer"
+                                    >
+                                      {chip}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                {comment ? (
+                                  <span className="text-amber-200 text-xs bg-amber-950/30 px-2 py-1 rounded border border-amber-500/30 flex items-center gap-1">
+                                    <MessageSquare className="w-3 h-3 text-amber-400 shrink-0" />
+                                    <span>{comment}</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-500 text-xs italic">Izoh yo'q</span>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    setEditingCommentStudentId(student.id);
+                                    setCommentInput(comment || '');
+                                  }}
+                                  className="text-slate-500 hover:text-amber-400 p-1 rounded cursor-pointer"
+                                  title="Izoh qo'shish yoki tahrirlash"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Cumulative Average Grade */}
+                          <td className="py-3 px-4 text-right whitespace-nowrap font-mono-code font-bold">
+                            <span className="text-amber-300 flex items-center justify-end gap-1">
+                              <Star className="w-3.5 h-3.5 fill-current text-amber-400" />
+                              <span>{avgGrade}</span>
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Grading Footer */}
+              <div className="p-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-[11px] font-mono-code text-slate-400">
+                <span className="text-amber-300/90 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Har bir kunga qo'yilgan baholar avtomatik saqlanadi</span>
+                </span>
+                <span className="text-slate-500">Maktab #45 · M.Xo'jayev</span>
+              </div>
+            </div>
+          ) : (
+            <div className="cyber-glass rounded-xl p-8 border border-dashed border-amber-500/40 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-amber-950/60 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400">
+                <Star className="w-7 h-7 fill-current" />
+              </div>
+              <div className="max-w-lg mx-auto space-y-2">
+                <div className="text-xs font-mono-code text-amber-400 uppercase">
+                  {selectedLessonNum}-DARS BAHOLASH BETI
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  {curriculumLesson?.topic || `${selectedLessonNum}-dars`}
+                </h3>
+                <p className="text-sm text-slate-400">
+                  Ushbu dars uchun hali baholash varag'i ochilmagan.
+                </p>
+              </div>
+              <button
+                onClick={() => handleOpenSheetForLesson(selectedLessonNum, 'grading')}
+                className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm inline-flex items-center gap-2 shadow-[0_0_20px_rgba(251,191,36,0.5)] transition-all cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Ushbu Kunga Baholash Betini Ochish</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* VIEW 3: ALL 72 TOPICS CATALOG & SHEET STATUS */}
       {activeView === 'catalog' && (
         <div className="space-y-4">
           <div className="cyber-glass-card rounded-xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border border-slate-800">
@@ -767,10 +1284,14 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
             {filteredCurriculum.map((lesson) => {
               const rec = attendance.find((a) => a.lessonNumber === lesson.number);
               let presentCount = 0;
+              let gradedCount = 0;
               if (rec) {
                 Object.values(rec.records).forEach((st) => {
                   if (st === 'present') presentCount++;
                 });
+                if (rec.grades) {
+                  gradedCount = Object.keys(rec.grades).length;
+                }
               }
 
               return (
@@ -791,9 +1312,17 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                       </div>
 
                       {rec ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono-code font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                          ✓ Ochilgan ({presentCount}/{students.length})
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono-code font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            ✓ {presentCount}/{students.length} kelgan
+                          </span>
+                          {gradedCount > 0 && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono-code font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-0.5">
+                              <Star className="w-2.5 h-2.5 fill-current" />
+                              <span>{gradedCount}</span>
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className="px-2 py-0.5 rounded text-[10px] font-mono-code bg-slate-800 text-slate-400">
                           Hali ochilmagan
@@ -806,31 +1335,32 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                     </h4>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
                     <span className="text-[11px] font-mono-code text-slate-400">
                       {lesson.quarter}-chorak
                     </span>
 
-                    <button
-                      onClick={() => handleOpenSheetForLesson(lesson.number)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                        rec
-                          ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950'
-                          : 'bg-slate-800 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                      }`}
-                    >
-                      {rec ? (
-                        <>
-                          <FileText className="w-3.5 h-3.5" />
-                          <span>Davomat Beti</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Betni Ochish</span>
-                        </>
-                      )}
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleOpenSheetForLesson(lesson.number, 'sheet')}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                          rec
+                            ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30'
+                            : 'bg-slate-800 hover:bg-cyan-500/20 text-slate-300'
+                        }`}
+                      >
+                        <FileText className="w-3 h-3" />
+                        <span>Davomat</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenSheetForLesson(lesson.number, 'grading')}
+                        className="px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-1 transition-all cursor-pointer shadow-[0_0_10px_rgba(251,191,36,0.3)]"
+                      >
+                        <Star className="w-3 h-3 fill-current" />
+                        <span>Baho Qo'yish</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -839,26 +1369,52 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
         </div>
       )}
 
-      {/* VIEW 3: FULL MATRIX (CROSS-TABLE) VIEW */}
+      {/* VIEW 4: FULL MATRIX (CROSS-TABLE) VIEW */}
       {activeView === 'matrix' && (
         <div className="cyber-glass rounded-xl border border-slate-800 overflow-hidden">
-          <div className="p-4 border-b border-slate-800 flex items-center justify-between gap-4">
+          <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-white">
-                Barcha Mavzular Yig'ma Jurnali (Matrix)
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <span>Barcha Mavzular Yig'ma Jurnali (Matrix)</span>
               </h3>
               <p className="text-xs text-slate-400">
-                Ochilgan barcha {attendance.length} ta dars mavzusi bo'yicha to'liq davomat jadvali
+                Ochilgan barcha {attendance.length} ta dars mavzusi bo'yicha to'liq davomat va kunlik baholar jadvali
               </p>
             </div>
 
-            <button
-              onClick={() => setShowPrintModal(true)}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Chop Etish</span>
-            </button>
+            <div className="flex items-center gap-2.5">
+              {/* Matrix Toggle: Attendance vs Grades */}
+              <div className="flex items-center p-0.5 rounded-lg bg-slate-950 border border-slate-800">
+                <button
+                  onClick={() => setMatrixMode('attendance')}
+                  className={`px-3 py-1 rounded text-xs font-semibold cursor-pointer ${
+                    matrixMode === 'attendance'
+                      ? 'bg-cyan-500 text-slate-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Davomat (K / X / S)
+                </button>
+                <button
+                  onClick={() => setMatrixMode('grades')}
+                  className={`px-3 py-1 rounded text-xs font-semibold cursor-pointer ${
+                    matrixMode === 'grades'
+                      ? 'bg-amber-400 text-slate-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Kunlik Baholar (5, 4, 3)
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowPrintModal(true)}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Chop Etish</span>
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
@@ -878,7 +1434,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                       className="py-3 px-2 text-center min-w-[44px] cursor-pointer hover:bg-slate-800/80 transition-colors border-r border-slate-800/40"
                       onClick={() => {
                         setSelectedLessonNum(rec.lessonNumber);
-                        setActiveView('sheet');
+                        setActiveView(matrixMode === 'grades' ? 'grading' : 'sheet');
                       }}
                     >
                       <div className="text-cyan-400 font-bold">#{rec.lessonNumber}</div>
@@ -886,13 +1442,14 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                     </th>
                   ))}
                   <th className="py-3 px-3 text-center sticky right-0 z-30 bg-slate-900 border-l border-slate-800 min-w-[80px]">
-                    Umumiy %
+                    {matrixMode === 'grades' ? "O'rtacha Baho" : "Umumiy %"}
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-mono-code">
                 {students.map((student) => {
                   const cumStats = getStudentCumulativeStats(student.id);
+                  const avgGrade = getStudentAverageGrade(student.id);
 
                   return (
                     <tr key={student.id} className="hover:bg-slate-900/50 transition-colors">
@@ -904,40 +1461,71 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                       </td>
                       {attendance.map((rec) => {
                         const st = rec.records[student.id] || 'present';
+                        const g = rec.grades?.[student.id];
+
                         return (
                           <td
                             key={rec.lessonNumber}
                             className="py-2.5 px-1 text-center border-r border-slate-800/30"
                             title={`${student.fullName} — ${rec.lessonNumber}-dars: ${
-                              st === 'present' ? 'Keldi' : st === 'absent' ? 'Kelmadi' : 'Sababli'
+                              matrixMode === 'grades'
+                                ? g ? `${g} baho` : 'Baholanmagan'
+                                : st === 'present' ? 'Keldi' : st === 'absent' ? 'Kelmadi' : 'Sababli'
                             }`}
                           >
-                            <span
-                              className={`w-6 h-6 inline-flex items-center justify-center rounded text-[11px] font-bold ${
-                                st === 'present'
-                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                  : st === 'absent'
-                                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                              }`}
-                            >
-                              {st === 'present' ? '✓' : st === 'absent' ? '✕' : 'S'}
-                            </span>
+                            {matrixMode === 'grades' ? (
+                              g ? (
+                                <span
+                                  className={`w-6 h-6 inline-flex items-center justify-center rounded text-[11px] font-bold ${
+                                    g === 5
+                                      ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                                      : g === 4
+                                      ? 'bg-cyan-500 text-slate-950 font-extrabold'
+                                      : g === 3
+                                      ? 'bg-amber-400 text-slate-950 font-extrabold'
+                                      : 'bg-rose-500 text-white font-extrabold'
+                                  }`}
+                                >
+                                  {g}
+                                </span>
+                              ) : (
+                                <span className="text-slate-600 text-[10px]">-</span>
+                              )
+                            ) : (
+                              <span
+                                className={`w-6 h-6 inline-flex items-center justify-center rounded text-[11px] font-bold ${
+                                  st === 'present'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    : st === 'absent'
+                                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                }`}
+                              >
+                                {st === 'present' ? '✓' : st === 'absent' ? '✕' : 'S'}
+                              </span>
+                            )}
                           </td>
                         );
                       })}
                       <td className="py-2.5 px-3 text-center sticky right-0 z-10 bg-slate-950/90 font-bold border-l border-slate-800">
-                        <span
-                          className={
-                            cumStats.percent >= 90
-                              ? 'text-emerald-400'
-                              : cumStats.percent >= 75
-                              ? 'text-cyan-400'
-                              : 'text-rose-400'
-                          }
-                        >
-                          {cumStats.percent}%
-                        </span>
+                        {matrixMode === 'grades' ? (
+                          <span className="text-amber-300 font-bold flex items-center justify-center gap-0.5">
+                            <Star className="w-3 h-3 fill-current text-amber-400" />
+                            <span>{avgGrade}</span>
+                          </span>
+                        ) : (
+                          <span
+                            className={
+                              cumStats.percent >= 90
+                                ? 'text-emerald-400'
+                                : cumStats.percent >= 75
+                                ? 'text-cyan-400'
+                                : 'text-rose-400'
+                            }
+                          >
+                            {cumStats.percent}%
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -955,7 +1543,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
             <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-cyan-400" />
-                <span>Yangi Dars Davomat Betini Ochish</span>
+                <span>Yangi Dars Davomat & Baholash Betini Ochish</span>
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -1040,7 +1628,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
               </div>
 
               <div className="p-3 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-xs text-cyan-300">
-                Ushbu bet ochilganda, barcha o'quvchilar avtomatik <strong>'Keldi'</strong> holatida kiritiladi va istalgan vaqtda o'zgartirishingiz mumkin.
+                Ushbu bet ochilganda, dars davomati va <strong>kunlik dars baholari</strong> bir zumda tayyor bo'ladi.
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
@@ -1055,7 +1643,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                   type="submit"
                   className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-[0_0_12px_rgba(6,182,212,0.4)] cursor-pointer"
                 >
-                  Davomat Betini Ochish
+                  Betni Ochish
                 </button>
               </div>
             </form>
@@ -1070,7 +1658,7 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
             <div className="flex items-center justify-between border-b pb-4">
               <div>
                 <h3 className="text-xl font-bold text-slate-950">
-                  Maktab #45 — Sun'iy Intellekt Kursi Davomat Varakasi
+                  Maktab #45 — Sun'iy Intellekt Kursi Davomat & Baholash Varakasi
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Rasmiy dars jurnali ko'chirmasi
@@ -1104,14 +1692,17 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                       <th className="p-2 border-r text-center w-10">№</th>
                       <th className="p-2 border-r">O'quvchi F.I.Sh</th>
                       <th className="p-2 border-r text-center w-20">Sinfi</th>
-                      <th className="p-2 border-r text-center w-28">Davomat</th>
-                      <th className="p-2">Sabab / Izoh</th>
+                      <th className="p-2 border-r text-center w-24">Davomat</th>
+                      <th className="p-2 border-r text-center w-20">Kunlik Baho</th>
+                      <th className="p-2">Ustoz Izohi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     {students.map((st, i) => {
                       const stStatus = activeRecord.records[st.id] || 'present';
-                      const stNote = activeRecord.notes?.[st.id] || '';
+                      const stGrade = activeRecord.grades?.[st.id];
+                      const stComment = activeRecord.gradeComments?.[st.id] || activeRecord.notes?.[st.id] || '';
+
                       return (
                         <tr key={st.id}>
                           <td className="p-2 border-r text-center">{i + 1}</td>
@@ -1120,7 +1711,10 @@ export const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({
                           <td className="p-2 border-r text-center font-bold">
                             {stStatus === 'present' ? 'Keldi' : stStatus === 'absent' ? 'Kelmadi' : 'Sababli'}
                           </td>
-                          <td className="p-2 text-slate-600">{stNote}</td>
+                          <td className="p-2 border-r text-center font-bold text-amber-700">
+                            {stGrade ? `${stGrade} baho` : '-'}
+                          </td>
+                          <td className="p-2 text-slate-600">{stComment}</td>
                         </tr>
                       );
                     })}

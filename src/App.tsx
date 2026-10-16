@@ -77,7 +77,8 @@ export default function App() {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           const hasRealStudentId = parsed.some((rec: any) => rec.records && (rec.records['AI-45-04'] !== undefined || rec.records['AI-45-03'] !== undefined));
-          if (hasRealStudentId) {
+          const hasGrades = parsed.some((rec: any) => rec.grades && Object.keys(rec.grades).length > 0);
+          if (hasRealStudentId && hasGrades) {
             return parsed;
           }
         }

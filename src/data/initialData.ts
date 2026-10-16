@@ -164,7 +164,7 @@ export const SAMPLE_DEFAULT_STUDENTS: Student[] = [
 // O'QUVCHILAR BAZASI
 export const INITIAL_STUDENTS: Student[] = SAMPLE_DEFAULT_STUDENTS;
 
-// DAVOMAT JURNALI (Har bir mavzu uchun alohida ochilgan davomat betlari)
+// DAVOMAT JURNALI (Har bir mavzu uchun alohida ochilgan davomat va kunlik baholash betlari)
 export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
   {
     date: '2026-09-02',
@@ -172,6 +172,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "Sun'iy intellekt nima? AI ning kundalik hayotdagi o'rni",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-03': 5, 'AI-45-04': 5 },
+    gradeComments: {
+      'AI-45-01': "Mavzu bo'yicha juda faol javob berdi",
+      'AI-45-03': "AI haqida aniq tushunchaga ega",
+      'AI-45-04': "Savollarga to'liq va asosli javob berdi",
+    },
   },
   {
     date: '2026-09-07',
@@ -179,6 +185,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "AI turlari: tor AI, generativ AI va kelajak AI tushunchasi",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-03': 4, 'AI-45-04': 5 },
+    gradeComments: {
+      'AI-45-01': "Generativ AI misollarini a'lo keltirdi",
+      'AI-45-03': "Yaxshi ishtirok etdi",
+      'AI-45-04': "Tor AI va Umumiy AI farqini to'g'ri aytdi",
+    },
   },
   {
     date: '2026-09-09',
@@ -186,6 +198,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "ChatGPT bilan xavfsiz va samarali ishlash asoslari",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-03': 5, 'AI-45-04': 5 },
+    gradeComments: {
+      'AI-45-01': "Xavfsizlik qoidalarini to'liq o'zlashtirgan",
+      'AI-45-03': "Promptlarni xavfsiz yozishni o'rgandi",
+      'AI-45-04': "Amaliy mashg'ulotda eng birinchi bajardi",
+    },
   },
   {
     date: '2026-09-14',
@@ -193,6 +211,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "Prompt anatomiyasi: rol, vazifa, kontekst va natija formati",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-03': 5, 'AI-45-04': 4 },
+    gradeComments: {
+      'AI-45-01': "Prompt anatomiyasi 4 ta elementini mukammal tushungan",
+      'AI-45-03': "Kontekst berishda a'lo mahorat",
+      'AI-45-04': "Natija formatini to'g'ri tanladi",
+    },
   },
   {
     date: '2026-09-16',
@@ -200,7 +224,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "Aniq topshiriq berish: noaniq va kuchli promptlar",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'excused', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-04': 5 },
     notes: { 'AI-45-03': "Informatika olimpiadasida qatnashgani sababli" },
+    gradeComments: {
+      'AI-45-01': "Noaniq promptlarni mohirona tahrirladi",
+      'AI-45-04': "Kuchli prompt misollari tuzdi",
+    },
   },
   {
     date: '2026-09-21',
@@ -208,6 +237,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "Kontekst berish va AI javobining sifatini oshirish",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-03': 5, 'AI-45-04': 5 },
+    gradeComments: {
+      'AI-45-01': "AI sifatini oshirish bo'yicha namunali ish",
+      'AI-45-03': "Olimpiadadan so'ng darsga a'lo tayyorgarlik bilan qaytdi",
+      'AI-45-04': "A'lo darajada faollik",
+    },
   },
   {
     date: '2026-09-23',
@@ -215,6 +250,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "Promptlarda cheklovlar va talablarni belgilash",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-03': 4, 'AI-45-04': 5 },
+    gradeComments: {
+      'AI-45-01': "Cheklovlar kiritishni to'liq bajardi",
+      'AI-45-03': "Yaxshi javob berdi",
+      'AI-45-04': "Promptda talablar jadvalini tuzdi",
+    },
   },
   {
     date: '2026-09-28',
@@ -222,6 +263,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "Zero-shot va few-shot prompting tushunchalari",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-03': 5, 'AI-45-04': 5 },
+    gradeComments: {
+      'AI-45-01': "Few-shot namunalarini mustaqil kiritdi",
+      'AI-45-03': "Amaliyotda natija ko'rsatdi",
+      'AI-45-04': "A'lo darajadagi taqqoslash",
+    },
   },
   {
     date: '2026-09-30',
@@ -229,6 +276,12 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     lessonTopic: "Chain-of-thought o'rniga bosqichma-bosqich vazifa dizayni",
     quarter: 1,
     records: { 'AI-45-01': 'present', 'AI-45-03': 'present', 'AI-45-04': 'present' },
+    grades: { 'AI-45-01': 5, 'AI-45-03': 5, 'AI-45-04': 5 },
+    gradeComments: {
+      'AI-45-01': "Mantiqiy zanjirni bexato tuzdi",
+      'AI-45-03': "Bosqichma-bosqich dizaynni to'liq himoya qildi",
+      'AI-45-04': "Bugungi darsda faol ishtirok etdi",
+    },
   },
 ];
 

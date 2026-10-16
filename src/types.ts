@@ -40,7 +40,9 @@ export interface AttendanceRecord {
   lessonNumber: number;
   lessonTopic: string;
   records: Record<string, AttendanceStatus>; // studentId -> status
-  notes?: Record<string, string>; // studentId -> izoh / sabab (masalan: "Betob", "Olimpiadada")
+  grades?: Record<string, number>; // studentId -> daily lesson grade (5, 4, 3, 2 yoki 0-100 ball)
+  gradeComments?: Record<string, string>; // studentId -> ustozning kunlik dars bo'yicha fikri/izohi
+  notes?: Record<string, string>; // studentId -> davomat izohi / sabab (masalan: "Betob", "Olimpiadada")
   quarter?: number;
 }
 
